@@ -1,0 +1,188 @@
+-- CJMSE seed data (generated). Run AFTER schema.sql.
+-- ============ subjects ============
+insert into subjects (slug,name_az,name_en,sort_order) values
+ ('transport','Dəniz nəqliyyatı və naviqasiya','Maritime Transport & Navigation',1),
+ ('power','Gəmi energetikası və mexanika','Marine Power & Mechanical Engineering',2),
+ ('electro','Elektrotexnika və avtomatika','Electrical Engineering & Automation',3),
+ ('hydro','Hidrotexnika və liman infrastrukturu','Hydrotechnics & Port Infrastructure',4),
+ ('logistics','Logistika və təchizat zəncirləri','Logistics & Supply Chains',5),
+ ('ecology','Dəniz ekologiyası və təhlükəsizlik','Marine Ecology & Safety',6),
+ ('shipbuild','Gəmiqayırma və materiallar','Shipbuilding & Materials',7),
+ ('digital','Rəqəmsal texnologiyalar və dəniz IT','Digital Technologies & Maritime IT',8)
+on conflict (slug) do nothing;
+
+-- ============ issues ============
+insert into issues (volume,number,year,title,is_current,published_at) values
+ (27,2,2026,'Cild 27, № 2 (2026)',true,'2026-05-01'),
+ (27,1,2026,'Cild 27, № 1 (2026)',false,'2026-01-01'),
+ (26,4,2025,'Cild 26, № 4 (2025)',false,'2025-04-01'),
+ (26,3,2025,'Cild 26, № 3 (2025)',false,'2025-03-01')
+on conflict (volume,number,year) do nothing;
+
+-- ============ authors ============
+insert into authors (full_name) values
+ ('R. Quliyev'),
+ ('A. Məmmədova'),
+ ('T. Hüseynov'),
+ ('N. Əliyev'),
+ ('S. Rəhimli'),
+ ('M. Əliyev'),
+ ('N. Həsənova'),
+ ('L. Quliyeva'),
+ ('F. Babayev'),
+ ('E. Qədirov'),
+ ('K. Səfərova'),
+ ('V. İsmayılov'),
+ ('G. Tağıyeva'),
+ ('S. Hüseynova'),
+ ('R. Əhmədov'),
+ ('C. Nağıyev'),
+ ('P. Allahverdiyeva'),
+ ('A. Kərimov'),
+ ('N. Vəliyeva'),
+ ('İ. Bağırov'),
+ ('M. Əhmədova'),
+ ('T. Süleymanov'),
+ ('R. Qasımova'),
+ ('F. Məmmədov'),
+ ('S. Əliyeva'),
+ ('K. Hacıyev'),
+ ('R. Orucov'),
+ ('L. Babayeva')
+on conflict do nothing;
+
+-- ============ articles ============
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-027','Avtonom gəmilərdə süni intellekt əsaslı toqquşmadan yayınma alqoritmi','Avtonom gəmilərdə süni intellekt əsaslı toqquşmadan yayınma alqoritmi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='digital'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '15–32','10.xxxxx/dn.2026.027','az','/pdf/dn-2026-027.pdf','/data/dn-2026-027',2150,12,'2026-05-18')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-028','Rəqəmsal əkiz (digital twin) texnologiyasının gəmi istismarında tətbiqi','Rəqəmsal əkiz (digital twin) texnologiyasının gəmi istismarında tətbiqi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='digital'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '33–49','10.xxxxx/dn.2026.028','az','/pdf/dn-2026-028.pdf','/data/dn-2026-028',1890,10,'2026-05-15')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-026','Xəzər dəniz dəhlizində konteyner daşımalarının marşrut optimizasiyası','Xəzər dəniz dəhlizində konteyner daşımalarının marşrut optimizasiyası mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='transport'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '5–14','10.xxxxx/dn.2026.026','az','/pdf/dn-2026-026.pdf','/data/dn-2026-026',1240,7,'2026-05-12')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-029','Qısa dəniz daşımalarının dayanıqlı inkişaf modeli','Qısa dəniz daşımalarının dayanıqlı inkişaf modeli mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='transport'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '50–66','10.xxxxx/dn.2026.029','az','/pdf/dn-2026-029.pdf',null,1180,6,'2026-05-10')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-030','Gəmi dizel mühərriklərində yanacaq sərfiyyatının hibrid sistemlə azaldılması','Gəmi dizel mühərriklərində yanacaq sərfiyyatının hibrid sistemlə azaldılması mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='power'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '67–80','10.xxxxx/dn.2026.030','az','/pdf/dn-2026-030.pdf','/data/dn-2026-030',980,5,'2026-05-08')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-031','Liman akvatoriyalarında neft çirklənməsinin sensor şəbəkəsi ilə monitorinqi','Liman akvatoriyalarında neft çirklənməsinin sensor şəbəkəsi ilə monitorinqi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','technical',
+  (select id from subjects where slug='ecology'),
+  (select id from issues where volume=27 and number=2 and year=2026),
+  '81–92','10.xxxxx/dn.2026.031','az','/pdf/dn-2026-031.pdf',null,760,3,'2026-05-05')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2025-018','Ballast sularının idarə olunması və invaziv növlərin nəzarəti','Ballast sularının idarə olunması və invaziv növlərin nəzarəti mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','review',
+  (select id from subjects where slug='ecology'),
+  (select id from issues where volume=26 and number=3 and year=2025),
+  '112–134','10.xxxxx/dn.2025.018','az','/pdf/dn-2025-018.pdf','/data/dn-2025-018',1010,21,'2025-08-20')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-015','Gəmi elektrik şəbəkələrində harmonik təhriflərin azaldılması','Gəmi elektrik şəbəkələrində harmonik təhriflərin azaldılması mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','review',
+  (select id from subjects where slug='electro'),
+  (select id from issues where volume=27 and number=1 and year=2026),
+  '88–110','10.xxxxx/dn.2026.015','az','/pdf/dn-2026-015.pdf',null,1450,18,'2026-02-22')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2025-024','Dəniz IoT sistemlərində verilənlərin təhlükəsizliyi','Dəniz IoT sistemlərində verilənlərin təhlükəsizliyi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','review',
+  (select id from subjects where slug='digital'),
+  (select id from issues where volume=26 and number=4 and year=2025),
+  '40–62','10.xxxxx/dn.2025.024','az','/pdf/dn-2025-024.pdf','/data/dn-2025-024',1320,15,'2025-11-15')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-011','Dalğaqıran konstruksiyalarının yük altında davamlılığının modelləşdirilməsi','Dalğaqıran konstruksiyalarının yük altında davamlılığının modelləşdirilməsi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='hydro'),
+  (select id from issues where volume=27 and number=1 and year=2026),
+  '5–22','10.xxxxx/dn.2026.011','az','/pdf/dn-2026-011.pdf','/data/dn-2026-011',1130,9,'2026-02-18')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2025-022','Kompozit materialların gəmi korpusunda tətbiqi: möhkəmlik təhlili','Kompozit materialların gəmi korpusunda tətbiqi: möhkəmlik təhlili mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='shipbuild'),
+  (select id from issues where volume=26 and number=4 and year=2025),
+  '15–34','10.xxxxx/dn.2025.022','az','/pdf/dn-2025-022.pdf',null,820,11,'2025-11-10')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2026-013','Liman terminallarında konteyner yerləşdirməsinin riyazi modeli','Liman terminallarında konteyner yerləşdirməsinin riyazi modeli mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','research',
+  (select id from subjects where slug='logistics'),
+  (select id from issues where volume=27 and number=1 and year=2026),
+  '46–60','10.xxxxx/dn.2026.013','az','/pdf/dn-2026-013.pdf','/data/dn-2026-013',690,4,'2026-02-12')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2025-026','GNSS siqnallarının dəqiqliyinin Xəzər regionunda qiymətləndirilməsi','GNSS siqnallarının dəqiqliyinin Xəzər regionunda qiymətləndirilməsi mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','short',
+  (select id from subjects where slug='transport'),
+  (select id from issues where volume=26 and number=4 and year=2025),
+  '90–98','10.xxxxx/dn.2025.026','az','/pdf/dn-2025-026.pdf',null,540,2,'2025-11-05')
+on conflict (slug) do nothing;
+insert into articles (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at) values
+ ('dn-2025-016','Gəmi soyutma sistemlərinin energetik səmərəliliyinin artırılması','Gəmi soyutma sistemlərinin energetik səmərəliliyinin artırılması mövzusunda aparılmış tədqiqatın metodologiyası, nəticələri və dənizçilik praktikası üçün əhəmiyyəti təqdim olunur.','technical',
+  (select id from subjects where slug='power'),
+  (select id from issues where volume=26 and number=3 and year=2025),
+  '70–84','10.xxxxx/dn.2025.016','az','/pdf/dn-2025-016.pdf',null,470,3,'2025-08-12')
+on conflict (slug) do nothing;
+
+-- ============ article_authors ============
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-027'),(select id from authors where full_name='R. Quliyev'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-027'),(select id from authors where full_name='A. Məmmədova'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-027'),(select id from authors where full_name='T. Hüseynov'),3,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-028'),(select id from authors where full_name='N. Əliyev'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-028'),(select id from authors where full_name='S. Rəhimli'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-026'),(select id from authors where full_name='M. Əliyev'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-026'),(select id from authors where full_name='N. Həsənova'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-029'),(select id from authors where full_name='L. Quliyeva'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-029'),(select id from authors where full_name='F. Babayev'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-030'),(select id from authors where full_name='E. Qədirov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-030'),(select id from authors where full_name='K. Səfərova'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-031'),(select id from authors where full_name='V. İsmayılov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-031'),(select id from authors where full_name='G. Tağıyeva'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-018'),(select id from authors where full_name='S. Hüseynova'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-018'),(select id from authors where full_name='R. Əhmədov'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-015'),(select id from authors where full_name='C. Nağıyev'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-015'),(select id from authors where full_name='P. Allahverdiyeva'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-024'),(select id from authors where full_name='A. Kərimov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-024'),(select id from authors where full_name='N. Vəliyeva'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-011'),(select id from authors where full_name='İ. Bağırov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-011'),(select id from authors where full_name='M. Əhmədova'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-022'),(select id from authors where full_name='T. Süleymanov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-022'),(select id from authors where full_name='R. Qasımova'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-013'),(select id from authors where full_name='F. Məmmədov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2026-013'),(select id from authors where full_name='S. Əliyeva'),2,false) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-026'),(select id from authors where full_name='K. Hacıyev'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-016'),(select id from authors where full_name='R. Orucov'),1,true) on conflict do nothing;
+insert into article_authors (article_id,author_id,author_position,is_corresponding) values ((select id from articles where slug='dn-2025-016'),(select id from authors where full_name='L. Babayeva'),2,false) on conflict do nothing;
+
+-- ============ faqs ============
+insert into faqs (category,question,answer,sort_order) values
+ ('Təqdimat','Məqaləni necə göndərə bilərəm?','Müəllif təlimatına uyğun əlyazma və metadata hazırlayıb portal vasitəsilə yükləyirsiniz. Sistem dərhal unikal əlyazma ID-si verir və proses başlayır.',1),
+ ('Təqdimat','Hansı məqalə növləri qəbul olunur?','Orijinal tədqiqat məqalələri, icmal məqalələri, texniki məqalələr və qısa məlumatlar (short communication) qəbul edilir.',2),
+ ('Təqdimat','Eyni vaxtda başqa jurnala göndərə bilərəmmi?','Xeyr. Eyni əlyazmanın eyni vaxtda bir neçə jurnala təqdim edilməsi (ikiqat təqdimat) nəşr etikasına ziddir və qadağandır.',3),
+ ('Təqdimat','Hansı dillərdə yazmaq olar?','Məqalələr Azərbaycan, ingilis və ya rus dilində qəbul edilir. Bütün məqalələr üçün ingilis dilində abstrakt və açar sözlər tələb olunur.',4),
+ ('Resenziya','Resenziya nə qədər çəkir?','İlk qərara qədər orta müddət təxminən 10 həftədir (hədəf ≤ 12 həftə). Müddət sahədən və rəyçilərin cavab sürətindən asılı dəyişə bilər.',5),
+ ('Resenziya','Neçə rəyçi məqaləni qiymətləndirir?','Hər əlyazma ən azı iki müstəqil ekspert tərəfindən ikili kor (double-blind) prinsipi ilə qiymətləndirilir — müəllif və rəyçi qarşılıqlı anonimdir.',6),
+ ('Resenziya','Məqalənin statusunu necə izləyə bilərəm?','Yuxarıdakı «Status izlə» bölməsində əlyazma ID-nizi daxil edərək hər mərhələni (təqdimat, yoxlanış, resenziya, düzəliş, qəbul, nəşr) real vaxtda görə bilərsiniz.',7),
+ ('Açıq giriş və ödənişlər','Dərc üçün ödəniş varmı?','Xeyr. Jurnal Diamond Open Access modelində işləyir — nə müəllif, nə də oxucu heç bir ödəniş etmir (0 ₼).',8),
+ ('Açıq giriş və ödənişlər','Müəlliflik hüququ kimdə qalır?','Müəlliflik hüququ müəllifdə qalır. Məqalələr CC BY 4.0 lisenziyası ilə dərc olunur — istinad şərti ilə sərbəst paylaşıla və istifadə edilə bilər.',9),
+ ('Açıq giriş və ödənişlər','Məqaləni harada paylaşa bilərəm?','CC BY 4.0 lisenziyası məqaləni istənilən platformada (repozitoriya, şəxsi sayt, sosial şəbəkə) müvafiq istinadla paylaşmağa imkan verir.',10),
+ ('Nəşrdən sonra','DOI nə vaxt verilir?','Hər məqaləyə nəşr zamanı CrossRef vasitəsilə daimi rəqəmsal identifikator (DOI) təyin edilir.',11),
+ ('Nəşrdən sonra','Məqalə hansı bazalarda görünür?','Məqalələr DOAJ, CrossRef və axtarış motorlarında indeksləşir; metadata maşın oxunaqlı formatdadır. Scopus və Web of Science üzrə müraciət hazırlığı davam edir.',12),
+ ('Nəşrdən sonra','Səhv aşkar olunarsa nə olur?','Kiçik səhvlər corrigendum/erratum ilə düzəldilir; ciddi pozuntular geri çəkilmə (retraction) və ya narahatlıq ifadəsi ilə nəticələnə bilər.',13),
+ ('Etika','Plagiat necə yoxlanılır?','Bütün təqdimatlar avtomatik oxşarlıq yoxlanışından və AI skrininqdən keçir. Nəticələr redaktora məsləhət xarakteri daşıyır; yekun qərarı redaksiya verir.',14),
+ ('Etika','Generativ süni intellektdən istifadə etmək olar?','AI istifadəsi (məs. dil redaktəsi) məqalədə açıqlanmalıdır. Süni intellekt müəllif kimi göstərilə bilməz — elmi məsuliyyət tamamilə müəlliflərin üzərindədir.',15),
+ ('Texniki','Faylı hansı formatda yükləməliyəm?','Mətn Word (.docx) və ya LaTeX formatında, şəkillər və cədvəllər isə ayrıca yüksək keyfiyyətli fayllar kimi yüklənməlidir.',16),
+ ('Texniki','Məqaləni hansı formatlarda oxuya bilərəm?','Hər məqalə interaktiv HTML, PDF və mümkün olduqda əlavə research data formatında təqdim olunur.',17);

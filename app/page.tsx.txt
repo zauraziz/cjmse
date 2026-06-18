@@ -1,2 +1,0 @@
-// Nümunə istifadə:
-const articles = await sql`SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 5`;

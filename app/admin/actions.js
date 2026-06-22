@@ -3,10 +3,13 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { put } from '@vercel/blob';
 import { sql } from '@/lib/db';
 import { ADMIN_COOKIE, sessionToken, verifyPassword, isAuthed } from '@/lib/auth';
 
-/* ---------------- helpers (not exported) ---------------- */
+const TYPES = ['research', 'review', 'technical', 'short', 'editorial'];
+
+/* ---------------- input sanitizers ---------------- */
 function str(v) {
   const s = (v ?? '').toString().trim();
   return s === '' ? null : s;
@@ -15,44 +18,56 @@ function int(v) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : null;
 }
+function uuid(v) {
+  const s = (v ?? '').toString().trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : null;
+}
+function enumVal(v, allowed, fb) {
+  const s = (v ?? '').toString().trim();
+  return allowed.includes(s) ? s : fb;
+}
+function dateVal(v) {
+  const s = (v ?? '').toString().trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
 function slugify(s) {
-  return (s || '')
-    .toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 }
 function revalidateAll() {
-  ['/', '/articles', '/issues', '/about'].forEach((p) => revalidatePath(p));
+  ['/', '/articles', '/issues', '/about', '/admin/articles', '/admin/authors', '/admin/issues']
+    .forEach((p) => revalidatePath(p));
 }
 function guard() {
   if (!isAuthed()) redirect('/admin/login');
 }
-async function setAuthorsAndKeywords(articleId, formData, clear) {
-  if (clear) {
-    await sql.query(`delete from article_authors where article_id = $1`, [articleId]);
-    await sql.query(`delete from article_keywords where article_id = $1`, [articleId]);
-  }
+
+async function uploadPdf(formData, base) {
+  const file = formData.get('pdf');
+  if (!file || typeof file === 'string' || !file.size) return null;
+  if (file.type && file.type !== 'application/pdf') return null;
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
+  const safe = (base || 'article').toString().replace(/[^a-z0-9-]/gi, '-').slice(0, 60);
+  const blob = await put(`pdf/${safe}-${Date.now()}.pdf`, file, {
+    access: 'public', contentType: 'application/pdf',
+  });
+  return blob.url;
+}
+
+async function setAuthors(articleId, formData, clear) {
+  if (clear) await sql.query(`delete from article_authors where article_id = $1`, [articleId]);
   let authors = [];
   try { authors = JSON.parse(formData.get('authors') || '[]'); } catch { authors = []; }
   let pos = 1;
   for (const a of authors) {
-    if (!a || !a.authorId) continue;
+    const aid = uuid(a && a.authorId);
+    if (!aid) continue;
     await sql.query(
       `insert into article_authors (article_id, author_id, author_position, is_corresponding)
        values ($1,$2,$3,$4)
        on conflict (article_id, author_id)
        do update set author_position = excluded.author_position, is_corresponding = excluded.is_corresponding`,
-      [articleId, a.authorId, pos++, !!a.isCorresponding]);
-  }
-  const kwRaw = str(formData.get('keywords')) || '';
-  const terms = [...new Set(kwRaw.split(',').map((t) => t.trim()).filter(Boolean))];
-  for (const term of terms) {
-    await sql.query(`insert into keywords (term) values ($1) on conflict (term) do nothing`, [term]);
-    const k = await sql.query(`select id from keywords where term = $1`, [term]);
-    if (k[0]) {
-      await sql.query(
-        `insert into article_keywords (article_id, keyword_id) values ($1,$2) on conflict do nothing`,
-        [articleId, k[0].id]);
-    }
+      [articleId, aid, pos++, !!a.isCorresponding]);
   }
 }
 
@@ -80,36 +95,35 @@ export async function createIssue(formData) {
   const year = int(formData.get('year'));
   const title = str(formData.get('title')) || `Cild ${volume}, № ${number} (${year})`;
   const isCurrent = formData.get('is_current') === 'on';
-  const pub = str(formData.get('published_at'));
   if (isCurrent) await sql.query(`update issues set is_current = false`);
   await sql.query(
-    `insert into issues (volume, number, year, title, is_current, published_at)
-     values ($1,$2,$3,$4,$5,$6)`,
-    [volume, number, year, title, isCurrent, pub]);
+    `insert into issues (volume, number, year, title, is_current, published_at) values ($1,$2,$3,$4,$5,$6)`,
+    [volume, number, year, title, isCurrent, dateVal(formData.get('published_at'))]);
   revalidateAll();
   redirect('/admin/issues');
 }
 
 export async function updateIssue(formData) {
   guard();
-  const id = str(formData.get('id'));
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/issues');
   const volume = int(formData.get('volume'));
   const number = int(formData.get('number'));
   const year = int(formData.get('year'));
   const title = str(formData.get('title')) || `Cild ${volume}, № ${number} (${year})`;
   const isCurrent = formData.get('is_current') === 'on';
-  const pub = str(formData.get('published_at'));
   if (isCurrent) await sql.query(`update issues set is_current = false where id <> $1`, [id]);
   await sql.query(
     `update issues set volume=$1, number=$2, year=$3, title=$4, is_current=$5, published_at=$6 where id=$7`,
-    [volume, number, year, title, isCurrent, pub, id]);
+    [volume, number, year, title, isCurrent, dateVal(formData.get('published_at')), id]);
   revalidateAll();
   redirect('/admin/issues');
 }
 
 export async function deleteIssue(formData) {
   guard();
-  await sql.query(`delete from issues where id = $1`, [str(formData.get('id'))]);
+  const id = uuid(formData.get('id'));
+  if (id) await sql.query(`delete from issues where id = $1`, [id]);
   revalidateAll();
   redirect('/admin/issues');
 }
@@ -128,7 +142,8 @@ export async function createAuthor(formData) {
 
 export async function updateAuthor(formData) {
   guard();
-  const id = str(formData.get('id'));
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/authors');
   await sql.query(
     `update authors set full_name=$1, orcid=$2, affiliation=$3, email=$4 where id=$5`,
     [str(formData.get('full_name')), str(formData.get('orcid')),
@@ -139,7 +154,8 @@ export async function updateAuthor(formData) {
 
 export async function deleteAuthor(formData) {
   guard();
-  await sql.query(`delete from authors where id = $1`, [str(formData.get('id'))]);
+  const id = uuid(formData.get('id'));
+  if (id) await sql.query(`delete from authors where id = $1`, [id]);
   revalidateAll();
   redirect('/admin/authors');
 }
@@ -153,45 +169,59 @@ export async function createArticle(formData) {
   let base = doi ? slugify(doi.split('/').pop()) : slugify(title);
   if (!base) base = 'meqale';
   let slug = base, n = 1;
-  while ((await sql.query(`select 1 from articles where slug = $1`, [slug])).length) {
-    slug = `${base}-${++n}`;
-  }
+  while ((await sql.query(`select 1 from articles where slug = $1`, [slug])).length) slug = `${base}-${++n}`;
+
+  const uploadedPdf = await uploadPdf(formData, slug);
+  const pdfUrl = uploadedPdf || str(formData.get('pdf_url'));
+
   const ins = await sql.query(
     `insert into articles
-       (slug,title,abstract,type,subject_id,issue_id,pages,doi,language,pdf_url,data_url,views,citations,published_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       (slug,title,title_en,abstract,abstract_en,keywords,keywords_en,type,subject_id,issue_id,
+        pages,doi,language,pdf_url,data_url,views,citations,published_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      returning id`,
-    [slug, title, str(formData.get('abstract')), str(formData.get('type')) || 'research',
-     str(formData.get('subject_id')), str(formData.get('issue_id')), str(formData.get('pages')),
-     doi, str(formData.get('language')) || 'az', str(formData.get('pdf_url')),
-     str(formData.get('data_url')), int(formData.get('views')) || 0,
-     int(formData.get('citations')) || 0, str(formData.get('published_at'))]);
-  await setAuthorsAndKeywords(ins[0].id, formData, false);
+    [slug, title, str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
+     str(formData.get('keywords')), str(formData.get('keywords_en')),
+     enumVal(formData.get('type'), TYPES, 'research'),
+     uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
+     str(formData.get('pages')), doi, str(formData.get('language')) || 'az',
+     pdfUrl, str(formData.get('data_url')),
+     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at'))]);
+  await setAuthors(ins[0].id, formData, false);
   revalidateAll();
   redirect('/admin/articles');
 }
 
 export async function updateArticle(formData) {
   guard();
-  const id = str(formData.get('id'));
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/articles');
+
+  const uploadedPdf = await uploadPdf(formData, id);
+  const pdfUrl = uploadedPdf || str(formData.get('pdf_url'));
+
   await sql.query(
     `update articles set
-       title=$1, abstract=$2, type=$3, subject_id=$4, issue_id=$5, pages=$6, doi=$7,
-       language=$8, pdf_url=$9, data_url=$10, views=$11, citations=$12, published_at=$13
-     where id=$14`,
-    [str(formData.get('title')), str(formData.get('abstract')), str(formData.get('type')) || 'research',
-     str(formData.get('subject_id')), str(formData.get('issue_id')), str(formData.get('pages')),
-     str(formData.get('doi')), str(formData.get('language')) || 'az', str(formData.get('pdf_url')),
-     str(formData.get('data_url')), int(formData.get('views')) || 0,
-     int(formData.get('citations')) || 0, str(formData.get('published_at')), id]);
-  await setAuthorsAndKeywords(id, formData, true);
+       title=$1, title_en=$2, abstract=$3, abstract_en=$4, keywords=$5, keywords_en=$6,
+       type=$7, subject_id=$8, issue_id=$9, pages=$10, doi=$11, language=$12,
+       pdf_url=$13, data_url=$14, views=$15, citations=$16, published_at=$17
+     where id=$18`,
+    [str(formData.get('title')), str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
+     str(formData.get('keywords')), str(formData.get('keywords_en')),
+     enumVal(formData.get('type'), TYPES, 'research'),
+     uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
+     str(formData.get('pages')), str(formData.get('doi')), str(formData.get('language')) || 'az',
+     pdfUrl, str(formData.get('data_url')),
+     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')), id]);
+  await setAuthors(id, formData, true);
   revalidateAll();
   redirect('/admin/articles');
 }
 
 export async function deleteArticle(formData) {
   guard();
-  await sql.query(`delete from articles where id = $1`, [str(formData.get('id'))]);
+  const id = uuid(formData.get('id'));
+  if (id) await sql.query(`delete from articles where id = $1`, [id]);
   revalidateAll();
   redirect('/admin/articles');
 }

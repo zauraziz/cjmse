@@ -29,7 +29,8 @@ export async function generateMetadata({ params }) {
     citation_doi: a.doi || '',
     citation_language: a.language || 'az',
     citation_abstract_html_url: url,
-    citation_pdf_url: a.pdf_url ? `${SITE}${a.pdf_url}` : '',
+    citation_pdf_url: a.pdf_url ? (a.pdf_url.startsWith('http') ? a.pdf_url : `${SITE}${a.pdf_url}`) : '',
+    citation_keywords: a.keywords || a.keywords_en || '',
     'DC.title': a.title,
     'DC.creator': authorsMeta,
     'DC.date': iso,
@@ -37,6 +38,7 @@ export async function generateMetadata({ params }) {
     'DC.publisher': 'ADDA',
     'DC.language': a.language || 'az',
     'DC.rights': a.license || 'CC BY 4.0',
+    'DC.subject': a.keywords_en || a.keywords || '',
   };
   for (const k of Object.keys(other)) {
     const v = other[k];
@@ -69,7 +71,8 @@ export default async function ArticlePage({ params }) {
           <span className="oa">Açıq giriş</span>
         </div>
 
-        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '2rem', lineHeight: 1.2, margin: '10px 0 14px' }}>{a.title}</h1>
+        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '2rem', lineHeight: 1.2, margin: '10px 0 6px' }}>{a.title}</h1>
+        {a.title_en && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.15rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 14px' }}>{a.title_en}</p>}
 
         <div style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.7 }}>
           {authors.map((au, i) => (
@@ -104,7 +107,19 @@ export default async function ArticlePage({ params }) {
         </div>
 
         <h2 className="sec-title" style={{ fontSize: '1.1rem' }}>Xülasə</h2>
-        <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--ink-2)' }}>{a.abstract}</p>
+        {a.abstract && <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--ink-2)' }}>{a.abstract}</p>}
+        {a.abstract_en && (
+          <>
+            <h3 style={{ fontFamily: 'var(--f-display)', fontSize: '1rem', color: 'var(--ink)', margin: '18px 0 8px' }}>Abstract (English)</h3>
+            <p style={{ fontSize: 15.5, lineHeight: 1.8, color: 'var(--ink-2)' }}>{a.abstract_en}</p>
+          </>
+        )}
+        {(a.keywords || a.keywords_en) && (
+          <div style={{ marginTop: 18 }}>
+            {a.keywords && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Açar sözlər: </b>{a.keywords}</p>}
+            {a.keywords_en && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Keywords: </b>{a.keywords_en}</p>}
+          </div>
+        )}
 
         <div className="panel" style={{ marginTop: 24 }}>
           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>

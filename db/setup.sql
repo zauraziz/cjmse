@@ -1,7 +1,6 @@
 -- ============================================================
 -- CJMSE — TAM QURAŞDIRMA (təkrar işə salmaq təhlükəsizdir)
 -- Neon SQL Editor-də bu faylı bütöv yapışdırıb işə salın.
--- Əvvəlcə mövcud obyektləri silir, sonra yenidən yaradır və seed edir.
 -- ============================================================
 
 -- 1) Təmizlik
@@ -61,7 +60,11 @@ create table articles (
   id            uuid primary key default gen_random_uuid(),
   slug          text unique not null,
   title         text not null,
+  title_en      text,
   abstract      text,
+  abstract_en   text,
+  keywords      text,
+  keywords_en   text,
   type          article_type not null default 'research',
   subject_id    uuid references subjects(id) on delete set null,
   issue_id      uuid references issues(id)   on delete set null,

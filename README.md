@@ -75,3 +75,14 @@ məqalə PDF-ləri (`/pdf/<slug>.pdf` — OJS-dən gələcək), real xülasələ
 
 ## Qeyd (təhlükəsizlik)
 Next 14.2.35-ə bağlıdır. Vaxtaşırı `npm i next@14.2` ilə ən son yamağa yeniləyin.
+
+## Admin paneli (/admin)
+Nömrələri, müəllifləri və məqalələri əlavə/redaktə/silmək üçün parolla qorunan panel.
+
+- Giriş: `https://cjmse.adda.edu.az/admin` → `/admin/login`.
+- **Tələb olunan env dəyişənləri** (Vercel → Settings → Environment Variables):
+  - `ADMIN_PASSWORD` — giriş parolu (boş olsa giriş mümkün deyil).
+  - `ADMIN_SESSION_SECRET` — sessiya imzası üçün uzun təsadüfi sətir.
+- Bütün yazma əməliyyatları server action-larla aparılır, sessiya httpOnly cookie ilə qorunur.
+- Dəyişikliklər `revalidatePath` ilə public səhifələrdə dərhal əks olunur.
+- Admin DB (Neon) ilə işləyir — `DATABASE_URL` təyin olunmalı və baza qurulmalıdır (`db/setup.sql`).

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Brand from './Brand';
 
 const OJS = process.env.NEXT_PUBLIC_OJS_URL || '#';
@@ -10,6 +10,9 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [qv, setQv] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin')) return null;
 
   function submit(e) {
     e.preventDefault();

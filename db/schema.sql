@@ -164,3 +164,9 @@ create table faqs (
 -- =====================================================================
 --  SEED — prototip məlumatları (nümunə)
 -- =====================================================================
+
+create table if not exists article_pdfs (
+  article_id uuid primary key references articles(id) on delete cascade,
+  data       text not null,
+  created_at timestamptz not null default now()
+);

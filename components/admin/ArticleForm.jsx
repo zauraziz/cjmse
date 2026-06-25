@@ -93,7 +93,7 @@ export default function ArticleForm({ action, subjects, issues, allAuthors, arti
       </div>
 
       <div className="adm-actions">
-        <button className="adm-btn" type="submit">{article ? 'Yadda saxla' : 'Məqalə əlavə et'}</button>
+        <button className="adm-btn" type="submit">Yadda saxla</button>
         <a className="adm-btn adm-btn--ghost" href="/admin/articles">Ləğv et</a>
       </div>
     </form>

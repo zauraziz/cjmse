@@ -31,7 +31,11 @@ function dateVal(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }
 function slugify(s) {
-  return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const map = { 'ə':'e','ğ':'g','ı':'i','İ':'i','ö':'o','ş':'s','ç':'c','ü':'u','x':'x','q':'q' };
+  return (s || '').toString()
+    .replace(/[əğıİöşçü]/gi, (ch) => map[ch.toLowerCase()] || ch)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 }
 function revalidateAll() {
@@ -42,16 +46,28 @@ function guard() {
   if (!isAuthed()) redirect('/admin/login');
 }
 
-async function uploadPdf(formData, base) {
+/** Store an uploaded PDF: Vercel Blob if configured, otherwise base64 in the DB.
+ *  Updates articles.pdf_url to the viewable URL. Only runs if a real PDF file was sent. */
+async function storePdf(formData, articleId, slug) {
   const file = formData.get('pdf');
-  if (!file || typeof file === 'string' || !file.size) return null;
-  if (file.type && file.type !== 'application/pdf') return null;
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
-  const safe = (base || 'article').toString().replace(/[^a-z0-9-]/gi, '-').slice(0, 60);
-  const blob = await put(`pdf/${safe}-${Date.now()}.pdf`, file, {
-    access: 'public', contentType: 'application/pdf',
-  });
-  return blob.url;
+  if (!file || typeof file === 'string' || !file.size) return;
+  if (file.type && file.type !== 'application/pdf') return;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const safe = (slug || 'article').replace(/[^a-z0-9-]/gi, '-').slice(0, 60);
+    const blob = await put(`pdf/${safe}-${Date.now()}.pdf`, file, { access: 'public', contentType: 'application/pdf' });
+    await sql.query(`update articles set pdf_url = $1 where id = $2`, [blob.url, articleId]);
+  } else {
+    try {
+      const b64 = Buffer.from(await file.arrayBuffer()).toString('base64');
+      await sql.query(
+        `insert into article_pdfs (article_id, data) values ($1,$2)
+         on conflict (article_id) do update set data = excluded.data`, [articleId, b64]);
+      await sql.query(`update articles set pdf_url = $1 where id = $2`, [`/pdf/${slug}`, articleId]);
+    } catch (e) {
+      // article_pdfs cədvəli yoxdursa (migration-v3 işə salınmayıb) — məqaləni çökdürmə
+      console.error('PDF DB storage failed (run migration-v3.sql):', e?.message);
+    }
+  }
 }
 
 async function setAuthors(articleId, formData, clear) {
@@ -75,7 +91,7 @@ async function setAuthors(articleId, formData, clear) {
 export async function login(formData) {
   if (verifyPassword(formData.get('password'))) {
     cookies().set(ADMIN_COOKIE, sessionToken(), {
-      httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 8,
+      httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30,
     });
     redirect('/admin');
   }
@@ -171,9 +187,6 @@ export async function createArticle(formData) {
   let slug = base, n = 1;
   while ((await sql.query(`select 1 from articles where slug = $1`, [slug])).length) slug = `${base}-${++n}`;
 
-  const uploadedPdf = await uploadPdf(formData, slug);
-  const pdfUrl = uploadedPdf || str(formData.get('pdf_url'));
-
   const ins = await sql.query(
     `insert into articles
        (slug,title,title_en,abstract,abstract_en,keywords,keywords_en,type,subject_id,issue_id,
@@ -185,20 +198,18 @@ export async function createArticle(formData) {
      enumVal(formData.get('type'), TYPES, 'research'),
      uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
      str(formData.get('pages')), doi, str(formData.get('language')) || 'az',
-     pdfUrl, str(formData.get('data_url')),
+     str(formData.get('pdf_url')), str(formData.get('data_url')),
      int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at'))]);
   await setAuthors(ins[0].id, formData, false);
+  await storePdf(formData, ins[0].id, slug);
   revalidateAll();
-  redirect('/admin/articles');
+  redirect('/admin/articles/new?saved=' + Date.now());
 }
 
 export async function updateArticle(formData) {
   guard();
   const id = uuid(formData.get('id'));
   if (!id) redirect('/admin/articles');
-
-  const uploadedPdf = await uploadPdf(formData, id);
-  const pdfUrl = uploadedPdf || str(formData.get('pdf_url'));
 
   await sql.query(
     `update articles set
@@ -211,9 +222,11 @@ export async function updateArticle(formData) {
      enumVal(formData.get('type'), TYPES, 'research'),
      uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
      str(formData.get('pages')), str(formData.get('doi')), str(formData.get('language')) || 'az',
-     pdfUrl, str(formData.get('data_url')),
+     str(formData.get('pdf_url')), str(formData.get('data_url')),
      int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')), id]);
   await setAuthors(id, formData, true);
+  const sl = await sql.query(`select slug from articles where id = $1`, [id]);
+  await storePdf(formData, id, sl[0] && sl[0].slug);
   revalidateAll();
   redirect('/admin/articles');
 }

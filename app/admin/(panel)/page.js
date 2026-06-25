@@ -17,7 +17,7 @@ export default async function Dashboard() {
         <div className="adm-stat"><b>{m.citations}</b><span>İstinad</span></div>
       </div>
       <div className="adm-quick">
-        <Link className="adm-btn" href="/admin/articles">+ Məqalə əlavə et</Link>
+        <Link className="adm-btn" href="/admin/articles/new">+ Məqalə əlavə et</Link>
         <Link className="adm-btn adm-btn--ghost" href="/admin/issues">+ Nömrə</Link>
         <Link className="adm-btn adm-btn--ghost" href="/admin/authors">+ Müəllif</Link>
       </div>

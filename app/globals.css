@@ -2,8 +2,8 @@
    ELMİ ƏSƏRLƏRİ — Q1 journal portal · light scholarly system
    ========================================================= */
 :root{
-  --paper:#F6F9FB; --surface:#FFFFFF; --mist:#ECF2F7; --mist-2:#E4EBF1;
-  --line:#D9E2EA; --line-2:#C6D3DD;
+  --paper:#FAF8F3; --surface:#FFFFFF; --mist:#F1ECE3; --mist-2:#E9E2D6;
+  --line:#E6E0D5; --line-2:#D6CDBF;
   --ink:#0E2942; --ink-2:#23435D; --muted:#516A7E; --muted-2:#6E869A;
   --teal:#0A7C8B; --teal-d:#075E6A; --teal-tint:#E3F2F3;
   --navy:#0E2942;
@@ -64,7 +64,7 @@ h1,h2,h3,h4{font-family:var(--f-display);font-weight:500;line-height:1.12;letter
 .topbar__r a:hover{background:rgba(255,255,255,.1);color:#fff}
 .topbar__r .sep{width:1px;height:14px;background:rgba(255,255,255,.18)}
 
-.head{position:sticky;top:0;z-index:140;background:rgba(246,249,251,.9);backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid var(--line)}
+.head{position:sticky;top:0;z-index:140;background:rgba(250,248,243,.92);backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid var(--line)}
 .head__in{display:flex;align-items:center;gap:20px;height:74px}
 .brand{display:flex;align-items:center;gap:13px;flex-shrink:0}
 .brand__mark{width:42px;height:42px;flex-shrink:0}

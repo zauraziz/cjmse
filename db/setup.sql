@@ -1,15 +1,10 @@
 -- ============================================================
 -- CJMSE — TAM QURAŞDIRMA (təkrar işə salmaq təhlükəsizdir)
--- Neon SQL Editor-də bu faylı bütöv yapışdırıb işə salın.
 -- ============================================================
-
--- 1) Təmizlik
-DROP TABLE IF EXISTS article_keywords, article_authors, reviews, submission_events, submissions, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
+DROP TABLE IF EXISTS article_pdfs, article_keywords, article_authors, reviews, submission_events, submissions, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
 DROP TYPE IF EXISTS recommendation, submission_status, user_role, article_type CASCADE;
 
--- ============================================================
--- 2) STRUKTUR
--- ============================================================
+-- STRUKTUR
 -- =====================================================================
 --  CJMSE / Elmi Əsərləri — Neon (PostgreSQL) verilənlər bazası sxemi
 --  PG 15+ (Neon). gen_random_uuid() core-dadır (əlavə extension lazım deyil).
@@ -177,9 +172,13 @@ create table faqs (
 --  SEED — prototip məlumatları (nümunə)
 -- =====================================================================
 
--- ============================================================
--- 3) DATA (seed)
--- ============================================================
+create table if not exists article_pdfs (
+  article_id uuid primary key references articles(id) on delete cascade,
+  data       text not null,
+  created_at timestamptz not null default now()
+);
+
+-- DATA (seed)
 -- CJMSE seed data (generated). Run AFTER schema.sql.
 -- ============ subjects ============
 insert into subjects (slug,name_az,name_en,sort_order) values

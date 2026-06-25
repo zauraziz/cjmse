@@ -6,7 +6,6 @@ import { getArticleBySlug } from '@/lib/queries';
 import { fmtDate, fmtViews, TYPE_LABEL } from '@/lib/format';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
-const OJS = process.env.NEXT_PUBLIC_OJS_URL || '#';
 
 export async function generateMetadata({ params }) {
   const a = await getArticleBySlug(params.slug);
@@ -101,9 +100,9 @@ export default async function ArticlePage({ params }) {
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '22px 0' }}>
-          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} target="_blank" rel="noopener noreferrer">Tam mətn (PDF)</a>}
+          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} target="_blank" rel="noopener noreferrer">PDF-i aç</a>}
+          {a.pdf_url && <a className="btn btn--ghost" href={a.pdf_url} download={`${a.slug}.pdf`}>PDF yüklə</a>}
           {a.data_url && <a className="btn btn--ghost" href={a.data_url} target="_blank" rel="noopener noreferrer">Research data</a>}
-          <a className="btn btn--ghost" href={OJS} target="_blank" rel="noopener noreferrer">OJS-də bax</a>
         </div>
 
         <h2 className="sec-title" style={{ fontSize: '1.1rem' }}>Xülasə</h2>
@@ -118,6 +117,20 @@ export default async function ArticlePage({ params }) {
           <div style={{ marginTop: 18 }}>
             {a.keywords && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Açar sözlər: </b>{a.keywords}</p>}
             {a.keywords_en && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Keywords: </b>{a.keywords_en}</p>}
+          </div>
+        )}
+
+        {a.pdf_url && (
+          <div style={{ marginTop: 26 }}>
+            <h2 className="sec-title" style={{ fontSize: '1.1rem' }}>Tam mətn</h2>
+            <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: 'var(--shadow)' }}>
+              <object data={a.pdf_url} type="application/pdf" style={{ width: '100%', height: '78vh', display: 'block' }}>
+                <iframe src={a.pdf_url} title="Tam mətn (PDF)" style={{ width: '100%', height: '78vh', border: 'none' }} />
+              </object>
+            </div>
+            <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>
+              PDF görünmürsə, <a href={a.pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>yeni pəncərədə açın</a> və ya <a href={a.pdf_url} download={`${a.slug}.pdf`} style={{ color: 'var(--teal-d)' }}>yükləyin</a>.
+            </p>
           </div>
         )}
 

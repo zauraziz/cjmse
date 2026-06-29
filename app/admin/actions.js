@@ -75,9 +75,24 @@ async function setAuthors(articleId, formData, clear) {
   let authors = [];
   try { authors = JSON.parse(formData.get('authors') || '[]'); } catch { authors = []; }
   let pos = 1;
+  const seen = new Set();
   for (const a of authors) {
-    const aid = uuid(a && a.authorId);
-    if (!aid) continue;
+    const name = ((a && a.name) || '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;            // eyni təqdimatda təkrar adı keç
+    seen.add(key);
+    let aid;
+    const found = await sql.query(
+      `select id from authors where lower(trim(full_name)) = lower(trim($1)) limit 1`, [name]);
+    if (found[0]) {
+      aid = found[0].id;                    // mövcud müəllif — təkrar yaratma
+    } else {
+      const ins = await sql.query(
+        `insert into authors (full_name, orcid, affiliation) values ($1,$2,$3) returning id`,
+        [name, (a.orcid || '').trim() || null, (a.affiliation || '').trim() || null]);
+      aid = ins[0].id;                      // yeni müəllif — avtomatik yaradılır
+    }
     await sql.query(
       `insert into article_authors (article_id, author_id, author_position, is_corresponding)
        values ($1,$2,$3,$4)
@@ -193,8 +208,8 @@ export async function createArticle(formData) {
     `insert into articles
        (slug,title,title_en,abstract,abstract_en,keywords,keywords_en,type,subject_id,issue_id,
         pages,doi,language,pdf_url,data_url,views,citations,published_at,
-        title_ru,abstract_ru,keywords_ru)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+        title_ru,abstract_ru,keywords_ru,udc)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
      returning id`,
     [slug, title, str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
      str(formData.get('keywords')), str(formData.get('keywords_en')),
@@ -203,7 +218,7 @@ export async function createArticle(formData) {
      str(formData.get('pages')), doi, str(formData.get('language')) || 'az',
      str(formData.get('pdf_url')), str(formData.get('data_url')),
      int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')),
-     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru'))]);
+     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru')), str(formData.get('udc'))]);
   await setAuthors(ins[0].id, formData, false);
   await storePdf(formData, ins[0].id, slug);
   revalidateAll();
@@ -220,8 +235,8 @@ export async function updateArticle(formData) {
        title=$1, title_en=$2, abstract=$3, abstract_en=$4, keywords=$5, keywords_en=$6,
        type=$7, subject_id=$8, issue_id=$9, pages=$10, doi=$11, language=$12,
        pdf_url=$13, data_url=$14, views=$15, citations=$16, published_at=$17,
-       title_ru=$18, abstract_ru=$19, keywords_ru=$20
-     where id=$21`,
+       title_ru=$18, abstract_ru=$19, keywords_ru=$20, udc=$21
+     where id=$22`,
     [str(formData.get('title')), str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
      str(formData.get('keywords')), str(formData.get('keywords_en')),
      enumVal(formData.get('type'), TYPES, 'research'),
@@ -229,7 +244,7 @@ export async function updateArticle(formData) {
      str(formData.get('pages')), str(formData.get('doi')), str(formData.get('language')) || 'az',
      str(formData.get('pdf_url')), str(formData.get('data_url')),
      int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')),
-     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru')), id]);
+     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru')), str(formData.get('udc')), id]);
   await setAuthors(id, formData, true);
   const sl = await sql.query(`select slug from articles where id = $1`, [id]);
   await storePdf(formData, id, sl[0] && sl[0].slug);

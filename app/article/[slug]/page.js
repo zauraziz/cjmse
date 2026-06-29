@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getArticleBySlug } from '@/lib/queries';
-import { fmtDate, fmtViews, TYPE_LABEL } from '@/lib/format';
+import { fmtDate } from '@/lib/format';
+import { getLang, getT } from '@/lib/serverLang';
+import { typeLabel } from '@/lib/i18n';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
 
@@ -44,44 +46,71 @@ export async function generateMetadata({ params }) {
     if (v === '' || v == null || (Array.isArray(v) && v.length === 0)) delete other[k];
   }
 
-  return {
-    title: a.title,
-    description: a.abstract || undefined,
-    alternates: { canonical: url },
-    other,
-  };
+  return { title: a.title, description: a.abstract || undefined, alternates: { canonical: url }, other };
 }
 
 export default async function ArticlePage({ params }) {
   const a = await getArticleBySlug(params.slug);
   if (!a) notFound();
   const authors = a.authors || [];
+  const lang = getLang();
+  const t = getT();
+
+  const titleByLang = { az: a.title, en: a.title_en, ru: a.title_ru };
+  const displayTitle = titleByLang[lang] || a.title;
+  const otherTitles = ['az', 'en', 'ru']
+    .filter((l) => l !== lang && titleByLang[l] && titleByLang[l] !== displayTitle)
+    .map((l) => ({ code: l, text: titleByLang[l] }));
+
+  const subjByLang = { az: a.subject_az, en: a.subject_en, ru: a.subject_ru };
+  const subjectName = subjByLang[lang] || a.subject_az;
+
+  const absByLang = [
+    { code: 'az', label: 'Xülasə', text: a.abstract },
+    { code: 'en', label: 'Abstract (English)', text: a.abstract_en },
+    { code: 'ru', label: 'Аннотация', text: a.abstract_ru },
+  ];
+  const orderedAbs = [...absByLang]
+    .sort((x, y) => (x.code === lang ? -1 : y.code === lang ? 1 : 0))
+    .filter((b) => b.text);
+
+  const kwByLang = [
+    { code: 'az', label: t.a_kwAz, text: a.keywords },
+    { code: 'en', label: t.a_kwEn, text: a.keywords_en },
+    { code: 'ru', label: t.a_kwRu, text: a.keywords_ru },
+  ];
+  const orderedKw = [...kwByLang]
+    .sort((x, y) => (x.code === lang ? -1 : y.code === lang ? 1 : 0))
+    .filter((b) => b.text);
 
   return (
     <section className="band">
       <div className="wrap" style={{ maxWidth: 860 }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href="/articles" style={{ fontFamily: 'var(--f-mono)', fontSize: 12.5, color: 'var(--teal-d)' }}>← Bütün məqalələr</Link>
+          <Link href="/articles" style={{ fontFamily: 'var(--f-mono)', fontSize: 12.5, color: 'var(--teal-d)' }}>{t.a_backToArticles}</Link>
         </div>
 
         <div className="art__top">
-          <span className="type-tag">{TYPE_LABEL[a.type] || a.type}</span>
-          <Link className="art__subj" href={`/articles?subject=${a.subject_slug}`}>{a.subject_az}</Link>
-          <span className="oa">Açıq giriş</span>
+          <span className="type-tag">{typeLabel(t, a.type)}</span>
+          <Link className="art__subj" href={`/articles?subject=${a.subject_slug}`}>{subjectName}</Link>
+          <span className="oa">{t.a_openAccess}</span>
         </div>
 
-        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '2rem', lineHeight: 1.2, margin: '10px 0 6px' }}>{a.title}</h1>
-        {a.title_en && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.15rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 4px' }}>{a.title_en}</p>}
-        {a.title_ru && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.1rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 14px' }}>{a.title_ru}</p>}
+        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '2rem', lineHeight: 1.2, margin: '10px 0 6px' }}>{displayTitle}</h1>
+        {otherTitles.map((ot) => (
+          <p key={ot.code} style={{ fontFamily: 'var(--f-display)', fontSize: '1.12rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 4px' }}>
+            {ot.text}{ot.code === 'az' && lang !== 'az' ? <span style={{ fontFamily: 'var(--f-mono)', fontStyle: 'normal', fontSize: 11, color: 'var(--muted)' }}> — {t.a_original}</span> : null}
+          </p>
+        ))}
 
-        <div style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+        <div style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.7, marginTop: 8 }}>
           {authors.map((au, i) => (
             <span key={i}>
-              {au.full_name}
+              <Link href={`/author/${au.author_id}`} style={{ color: 'var(--ink)', fontWeight: 500 }}>{au.full_name}</Link>
               {au.orcid && (
                 <a href={`https://orcid.org/${au.orcid}`} target="_blank" rel="noopener noreferrer" title="ORCID" style={{ color: '#A6CE39', marginLeft: 4, fontWeight: 700 }}>iD</a>
               )}
-              {au.is_corresponding && <sup title="Əlaqələndirici müəllif"> ✉</sup>}
+              {au.is_corresponding && <sup title={t.a_corresponding}> ✉</sup>}
               {i < authors.length - 1 ? ', ' : ''}
             </span>
           ))}
@@ -93,61 +122,53 @@ export default async function ArticlePage({ params }) {
         )}
 
         <div className="art__meta" style={{ marginTop: 14 }}>
+          {a.udc && <span>{t.a_udc}: {a.udc}</span>}
           <span>{a.issue_title}</span>
-          <span>səh. {a.pages}</span>
+          <span>{t.a_pagesAbbr} {a.pages}</span>
           <span>{fmtDate(a.published_at)}</span>
           {a.doi && <a className="doi" href={`https://doi.org/${a.doi}`} target="_blank" rel="noopener noreferrer">DOI: {a.doi}</a>}
           <span>{a.license || 'CC BY 4.0'}</span>
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '22px 0' }}>
-          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} download={`${a.slug}.pdf`}>PDF yüklə</a>}
-          {a.data_url && <a className="btn btn--ghost" href={a.data_url} target="_blank" rel="noopener noreferrer">Research data</a>}
+          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} download={`${a.slug}.pdf`}>{t.a_pdfDownload}</a>}
+          {a.data_url && <a className="btn btn--ghost" href={a.data_url} target="_blank" rel="noopener noreferrer">{t.a_researchData}</a>}
         </div>
 
-        {a.abstract && (
-          <div style={{ marginTop: 24 }}>
-            <h2 className="abs-h">Xülasə</h2>
-            <p className="abs-t">{a.abstract}</p>
+        {orderedAbs.map((b) => (
+          <div key={b.code} style={{ marginTop: 22 }}>
+            <h2 className="abs-h">{b.label}</h2>
+            <p className="abs-t">{b.text}</p>
           </div>
-        )}
-        {a.abstract_en && (
-          <div style={{ marginTop: 20 }}>
-            <h2 className="abs-h">Abstract (English)</h2>
-            <p className="abs-t">{a.abstract_en}</p>
-          </div>
-        )}
-        {a.abstract_ru && (
-          <div style={{ marginTop: 20 }}>
-            <h2 className="abs-h">Аннотация</h2>
-            <p className="abs-t">{a.abstract_ru}</p>
-          </div>
-        )}
-        {(a.keywords || a.keywords_en || a.keywords_ru) && (
+        ))}
+
+        {orderedKw.length > 0 && (
           <div style={{ marginTop: 18 }}>
-            {a.keywords && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Açar sözlər: </b>{a.keywords}</p>}
-            {a.keywords_en && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Keywords: </b>{a.keywords_en}</p>}
-            {a.keywords_ru && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Ключевые слова: </b>{a.keywords_ru}</p>}
+            {orderedKw.map((b) => (
+              <p key={b.code} style={{ fontSize: 14, color: '#111', margin: '4px 0' }}>
+                <b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>{b.label}: </b>{b.text}
+              </p>
+            ))}
           </div>
         )}
 
         {a.pdf_url && (
           <div style={{ marginTop: 26 }}>
-            <h2 className="sec-title" style={{ fontSize: '1.1rem' }}>Tam mətn</h2>
+            <h2 className="abs-h">{t.a_fullText}</h2>
             <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: 'var(--shadow)' }}>
               <object data={a.pdf_url} type="application/pdf" style={{ width: '100%', height: '78vh', display: 'block' }}>
-                <iframe src={a.pdf_url} title="Tam mətn (PDF)" style={{ width: '100%', height: '78vh', border: 'none' }} />
+                <iframe src={a.pdf_url} title={t.a_fullText} style={{ width: '100%', height: '78vh', border: 'none' }} />
               </object>
             </div>
             <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>
-              PDF görünmürsə, <a href={a.pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>yeni pəncərədə açın</a> və ya <a href={a.pdf_url} download={`${a.slug}.pdf`} style={{ color: 'var(--teal-d)' }}>yükləyin</a>.
+              {t.a_pdfNotShown} <a href={a.pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>{t.a_openNew}</a> {lang === 'az' ? 'və ya' : lang === 'ru' ? 'или' : 'or'} <a href={a.pdf_url} download={`${a.slug}.pdf`} style={{ color: 'var(--teal-d)' }}>{t.a_orDownload}</a>.
             </p>
           </div>
         )}
 
         <div className="panel" style={{ marginTop: 24 }}>
           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>
-            <b style={{ color: 'var(--ink)' }}>İstinad:</b> {authors.map((au) => au.full_name).join(', ')} ({a.year}). {a.title}. <i>Caspian Journal of Maritime Science &amp; Engineering</i>, {a.volume}({a.number}), {a.pages}.{a.doi ? ' https://doi.org/' + a.doi : ''}
+            <b style={{ color: 'var(--ink)' }}>{t.a_citeAs}:</b> {authors.map((au) => au.full_name).join(', ')} ({a.year}). {a.title}. <i>Caspian Journal of Maritime Science &amp; Engineering</i>, {a.volume}({a.number}), {a.pages}.{a.doi ? ' https://doi.org/' + a.doi : ''}
           </div>
         </div>
       </div>

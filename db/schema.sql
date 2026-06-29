@@ -62,6 +62,7 @@ create table articles (
   issue_id      uuid references issues(id)   on delete set null,
   pages         text,                       -- "15–32"
   doi           text unique,
+  udc           text,
   license       text default 'CC BY 4.0',
   language      text default 'az',
   pdf_url       text,

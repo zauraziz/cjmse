@@ -3,19 +3,19 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { getIssuesWithCounts } from '@/lib/queries';
 import { fmtDate } from '@/lib/format';
+import { getT } from '@/lib/serverLang';
 
 export const metadata = { title: 'Arxiv' };
 
 export default async function IssuesArchive() {
   const issues = await getIssuesWithCounts();
+  const t = getT();
   return (
     <section className="band">
       <div className="wrap">
-        <h1 className="sec-title">Jurnalın arxivi</h1>
-        <p style={{ color: 'var(--muted)', margin: '-6px 0 20px', fontSize: 14.5 }}>
-          Bütün nömrələr. İstənilən nömrəyə klikləyərək həmin nömrənin məqalələrinə baxın.
-        </p>
-        {issues.length === 0 && <p style={{ color: 'var(--muted)' }}>Hələ nömrə yoxdur.</p>}
+        <h1 className="sec-title">{t.a_archiveTitle}</h1>
+        <p style={{ color: 'var(--muted)', margin: '-6px 0 20px', fontSize: 14.5 }}>{t.a_archiveIntro}</p>
+        {issues.length === 0 && <p style={{ color: 'var(--muted)' }}>{t.a_noIssues}</p>}
         <div className="subjects">
           {issues.map((i) => (
             <Link key={i.id} className="subj" href={`/issues/${i.id}`} style={{ alignItems: 'flex-start' }}>
@@ -26,16 +26,14 @@ export default async function IssuesArchive() {
               </span>
               <span>
                 <span className="subj__n">
-                  Cild {i.volume}, № {i.number} ({i.year}){i.is_current && <span className="oa" style={{ marginLeft: 8 }}>Cari</span>}
+                  {t.a_vol} {i.volume}, № {i.number} ({i.year}){i.is_current && <span className="oa" style={{ marginLeft: 8 }}>{t.a_current}</span>}
                 </span>
-                <span className="subj__c">{i.count} məqalə{i.published_at ? ' · ' + fmtDate(i.published_at) : ''}</span>
+                <span className="subj__c">{i.count} {t.a_count}{i.published_at ? ' · ' + fmtDate(i.published_at) : ''}</span>
               </span>
             </Link>
           ))}
         </div>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', marginTop: 20 }}>
-          Arxiv tam mətnləri ilə birlikdə CrossRef DOI vasitəsilə daimi olaraq əlçatandır.
-        </p>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', marginTop: 20 }}>{t.a_archiveCrossref}</p>
       </div>
     </section>
   );

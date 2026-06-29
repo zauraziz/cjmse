@@ -3,16 +3,18 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import Brand from './Brand';
+import LangSwitch from './LangSwitch';
 
 const OJS = process.env.NEXT_PUBLIC_OJS_URL || '#';
 
-export default function Header() {
+export default function Header({ lang = 'az', t }) {
   const [open, setOpen] = useState(false);
   const [qv, setQv] = useState('');
   const router = useRouter();
   const pathname = usePathname();
 
   if (pathname?.startsWith('/admin')) return null;
+  const tr = t || {};
 
   function submit(e) {
     e.preventDefault();
@@ -24,12 +26,12 @@ export default function Header() {
     <>
       <div className="topbar">
         <div className="wrap topbar__in">
-          <span className="topbar__l">ISSN XXXX-XXXX (online) · Diamond Open Access · CC BY 4.0</span>
+          <span className="topbar__l">{tr.topInfo}</span>
           <nav className="topbar__r" aria-label="Köməkçi keçidlər">
-            <Link href="/for-authors">Müəlliflər</Link><span className="sep" />
-            <Link href="/ethics">Etika</Link><span className="sep" />
-            <Link href="/about">Haqqında</Link><span className="sep" />
-            <span className="lang">AZ · EN · RU</span>
+            <Link href="/for-authors">{tr.nav_authors}</Link><span className="sep" />
+            <Link href="/ethics">{tr.nav_ethics}</Link><span className="sep" />
+            <Link href="/about">{tr.nav_about}</Link><span className="sep" />
+            <LangSwitch current={lang} />
           </nav>
         </div>
       </div>
@@ -40,20 +42,20 @@ export default function Header() {
           <form className="head__search" role="search" onSubmit={submit}>
             <label className="search">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-              <input value={qv} onChange={(e) => setQv(e.target.value)} type="search" placeholder="Məqalə, müəllif, açar söz…" aria-label="Məqalə axtarışı" />
+              <input value={qv} onChange={(e) => setQv(e.target.value)} type="search" placeholder={tr.searchPh} aria-label="Axtarış" />
             </label>
           </form>
           <nav className="head__nav" aria-label="Əsas naviqasiya">
-            <Link href="/articles" onClick={() => setOpen(false)}>Məqalələr</Link>
-            <Link href="/issues" onClick={() => setOpen(false)}>Nömrələr</Link>
-            <Link href="/for-authors" onClick={() => setOpen(false)}>Müəlliflər üçün</Link>
-            <Link href="/ethics" onClick={() => setOpen(false)}>Etika</Link>
-            <Link href="/about" onClick={() => setOpen(false)}>Haqqında</Link>
+            <Link href="/articles" onClick={() => setOpen(false)}>{tr.nav_articles}</Link>
+            <Link href="/issues" onClick={() => setOpen(false)}>{tr.nav_issues}</Link>
+            <Link href="/for-authors" onClick={() => setOpen(false)}>{tr.nav_forAuthors}</Link>
+            <Link href="/ethics" onClick={() => setOpen(false)}>{tr.nav_ethics}</Link>
+            <Link href="/about" onClick={() => setOpen(false)}>{tr.nav_about}</Link>
           </nav>
           <a className="btn btn--primary head__cta" href={OJS} target="_blank" rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>Məqalə göndər
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>{tr.submit}
           </a>
-          <button className="navtoggle" aria-label="Menyu" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <button className="navtoggle" aria-label={tr.menu} aria-expanded={open} onClick={() => setOpen(!open)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>
         </div>

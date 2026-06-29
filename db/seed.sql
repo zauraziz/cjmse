@@ -1,14 +1,10 @@
 -- CJMSE seed data (generated). Run AFTER schema.sql.
 -- ============ subjects ============
-insert into subjects (slug,name_az,name_en,sort_order) values
- ('transport','Dəniz nəqliyyatı və naviqasiya','Maritime Transport & Navigation',1),
- ('power','Gəmi energetikası və mexanika','Marine Power & Mechanical Engineering',2),
- ('electro','Elektrotexnika və avtomatika','Electrical Engineering & Automation',3),
- ('hydro','Hidrotexnika və liman infrastrukturu','Hydrotechnics & Port Infrastructure',4),
- ('logistics','Logistika və təchizat zəncirləri','Logistics & Supply Chains',5),
- ('ecology','Dəniz ekologiyası və təhlükəsizlik','Marine Ecology & Safety',6),
- ('shipbuild','Gəmiqayırma və materiallar','Shipbuilding & Materials',7),
- ('digital','Rəqəmsal texnologiyalar və dəniz IT','Digital Technologies & Maritime IT',8)
+insert into subjects (slug,name_az,name_en,name_ru,sort_order) values
+ ('shipbuilding','Gəmiqayırma və gəmi təmiri texnologiyası','Shipbuilding and Ship Repair Technology','Технология судостроения и судоремонта',1),
+ ('operation','Gəmiçilik və su nəqliyyatının istismarı','Shipping and Water Transport Operation','Судоходство и эксплуатация водного транспорта',2),
+ ('equipment','Gəmiçilik texnikası','Shipping Equipment','Судовая техника',3),
+ ('natural-science','Gəmiçilikdə təbiət elmləri problemləri','Natural Science Problems in Shipping','Проблемы естественных наук в судоходстве',4)
 on conflict (slug) do nothing;
 
 -- ============ issues ============

@@ -16,6 +16,7 @@ create table subjects (
   slug        text unique not null,
   name_az     text not null,
   name_en     text not null,
+  name_ru     text,
   sort_order  int  default 0
 );
 
@@ -53,6 +54,9 @@ create table articles (
   abstract_en   text,
   keywords      text,
   keywords_en   text,
+  title_ru      text,
+  abstract_ru   text,
+  keywords_ru   text,
   type          article_type not null default 'research',
   subject_id    uuid references subjects(id) on delete set null,
   issue_id      uuid references issues(id)   on delete set null,

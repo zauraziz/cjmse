@@ -39,7 +39,7 @@ function slugify(s) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 }
 function revalidateAll() {
-  ['/', '/articles', '/issues', '/about', '/admin/articles', '/admin/authors', '/admin/issues']
+  ['/', '/articles', '/issues', '/about', '/admin/articles', '/admin/articles/new', '/admin/authors', '/admin/issues']
     .forEach((p) => revalidatePath(p));
 }
 function guard() {
@@ -149,6 +149,8 @@ export async function createAuthor(formData) {
   guard();
   const name = str(formData.get('full_name'));
   if (!name) redirect('/admin/authors?error=1');
+  const dup = await sql.query(`select id from authors where lower(trim(full_name)) = lower(trim($1)) limit 1`, [name]);
+  if (dup[0]) { revalidateAll(); redirect('/admin/authors?exists=1'); }
   await sql.query(
     `insert into authors (full_name, orcid, affiliation, email) values ($1,$2,$3,$4)`,
     [name, str(formData.get('orcid')), str(formData.get('affiliation')), str(formData.get('email'))]);
@@ -190,8 +192,9 @@ export async function createArticle(formData) {
   const ins = await sql.query(
     `insert into articles
        (slug,title,title_en,abstract,abstract_en,keywords,keywords_en,type,subject_id,issue_id,
-        pages,doi,language,pdf_url,data_url,views,citations,published_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+        pages,doi,language,pdf_url,data_url,views,citations,published_at,
+        title_ru,abstract_ru,keywords_ru)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
      returning id`,
     [slug, title, str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
      str(formData.get('keywords')), str(formData.get('keywords_en')),
@@ -199,7 +202,8 @@ export async function createArticle(formData) {
      uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
      str(formData.get('pages')), doi, str(formData.get('language')) || 'az',
      str(formData.get('pdf_url')), str(formData.get('data_url')),
-     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at'))]);
+     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')),
+     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru'))]);
   await setAuthors(ins[0].id, formData, false);
   await storePdf(formData, ins[0].id, slug);
   revalidateAll();
@@ -215,15 +219,17 @@ export async function updateArticle(formData) {
     `update articles set
        title=$1, title_en=$2, abstract=$3, abstract_en=$4, keywords=$5, keywords_en=$6,
        type=$7, subject_id=$8, issue_id=$9, pages=$10, doi=$11, language=$12,
-       pdf_url=$13, data_url=$14, views=$15, citations=$16, published_at=$17
-     where id=$18`,
+       pdf_url=$13, data_url=$14, views=$15, citations=$16, published_at=$17,
+       title_ru=$18, abstract_ru=$19, keywords_ru=$20
+     where id=$21`,
     [str(formData.get('title')), str(formData.get('title_en')), str(formData.get('abstract')), str(formData.get('abstract_en')),
      str(formData.get('keywords')), str(formData.get('keywords_en')),
      enumVal(formData.get('type'), TYPES, 'research'),
      uuid(formData.get('subject_id')), uuid(formData.get('issue_id')),
      str(formData.get('pages')), str(formData.get('doi')), str(formData.get('language')) || 'az',
      str(formData.get('pdf_url')), str(formData.get('data_url')),
-     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')), id]);
+     int(formData.get('views')) || 0, int(formData.get('citations')) || 0, dateVal(formData.get('published_at')),
+     str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru')), id]);
   await setAuthors(id, formData, true);
   const sl = await sql.query(`select slug from articles where id = $1`, [id]);
   await storePdf(formData, id, sl[0] && sl[0].slug);

@@ -384,3 +384,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 .adm-mini{background:#fff;border:1px solid var(--line);color:var(--ink);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:14px;line-height:1}
 .adm-mini:hover{background:var(--paper)}
 @media(max-width:760px){.adm{grid-template-columns:1fr}.adm-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}.adm-side nav{flex-direction:row;flex-wrap:wrap}.adm-logout{width:auto;margin:0}.adm-form,.adm-cards{grid-template-columns:1fr}.adm-main{padding:20px}}
+
+/* Article abstract blocks — prominent headings + black body text */
+.abs-h{font-family:var(--f-display);font-size:1.18rem;font-weight:600;color:var(--ink);margin:0 0 9px;padding-bottom:7px;border-bottom:2px solid var(--teal);display:inline-block}
+.abs-t{font-size:16px;line-height:1.85;color:#111;margin:0}
+
+/* Language switcher buttons */
+.lang-b{background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:0 1px;opacity:.6;transition:opacity .15s,color .15s}
+.lang-b:hover{opacity:1}
+.lang-b.on{opacity:1;font-weight:700;color:var(--teal-d)}
+.lang-sep{opacity:.4}

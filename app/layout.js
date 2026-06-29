@@ -1,6 +1,8 @@
 import './globals.css';
+import { cookies } from 'next/headers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { getDict, DEFAULT_LANG } from '@/lib/i18n';
 
 export const metadata = {
   title: {
@@ -18,8 +20,10 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const lang = cookies().get('lang')?.value || DEFAULT_LANG;
+  const t = getDict(lang);
   return (
-    <html lang="az">
+    <html lang={lang}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -29,10 +33,10 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <a href="#main" className="skip">Əsas məzmuna keç</a>
-        <Header />
+        <a href="#main" className="skip">{t.skip}</a>
+        <Header lang={lang} t={t} />
         <main id="main">{children}</main>
-        <Footer />
+        <Footer t={t} />
       </body>
     </html>
   );

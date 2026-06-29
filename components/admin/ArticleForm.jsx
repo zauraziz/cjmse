@@ -34,6 +34,12 @@ export default function ArticleForm({ action, subjects, issues, allAuthors, arti
       <div className="adm-field full"><label>Abstract (English)</label><textarea name="abstract_en" defaultValue={article?.abstract_en ?? ''} /></div>
       <div className="adm-field full"><label>Keywords (English · comma-separated)</label><input name="keywords_en" defaultValue={article?.keywords_en ?? ''} placeholder="navigation, GPS, route" /></div>
 
+      {/* ---- Russian ---- */}
+      <div className="adm-field full" style={head}><span style={headTxt}>Rus dili (Русский)</span></div>
+      <div className="adm-field full"><label>Заголовок (на русском)</label><input name="title_ru" defaultValue={article?.title_ru ?? ''} /></div>
+      <div className="adm-field full"><label>Аннотация (на русском)</label><textarea name="abstract_ru" defaultValue={article?.abstract_ru ?? ''} /></div>
+      <div className="adm-field full"><label>Ключевые слова (через запятую)</label><input name="keywords_ru" defaultValue={article?.keywords_ru ?? ''} placeholder="навигация, GPS, маршрут" /></div>
+
       {/* ---- metadata ---- */}
       <div className="adm-field full" style={head}><span style={headTxt}>Metadata</span></div>
       <div className="adm-field"><label>Növ</label>

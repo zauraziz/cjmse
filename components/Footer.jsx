@@ -3,47 +3,48 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Brand from './Brand';
 
-export default function Footer() {
+export default function Footer({ t }) {
   const pathname = usePathname();
   if (pathname?.startsWith('/admin')) return null;
+  const tr = t || {};
   return (
     <footer>
       <div className="wrap">
         <div className="foot">
           <div>
             <Brand footer />
-            <p>Azərbaycan Dövlət Dəniz Akademiyasının resenziyalı, açıq girişli elmi jurnalı — dənizçilik, nəqliyyat və mühəndislik elmləri üzrə.</p>
+            <p>{tr.foot_about}</p>
           </div>
           <div>
-            <h6>Naviqasiya</h6>
+            <h6>{tr.foot_nav}</h6>
             <ul>
-              <li><Link href="/issues">Cari nömrə</Link></li>
-              <li><Link href="/articles">Bütün məqalələr</Link></li>
-              <li><Link href="/#subjects">Tədqiqat sahələri</Link></li>
-              <li><Link href="/issues">Arxiv</Link></li>
-              <li><Link href="/#faq">FAQ</Link></li>
+              <li><Link href="/issues">{tr.foot_current}</Link></li>
+              <li><Link href="/articles">{tr.foot_allArticles}</Link></li>
+              <li><Link href="/#subjects">{tr.foot_subjects}</Link></li>
+              <li><Link href="/issues">{tr.foot_archive}</Link></li>
+              <li><Link href="/#faq">{tr.foot_faq}</Link></li>
             </ul>
           </div>
           <div>
-            <h6>Müəlliflər üçün</h6>
+            <h6>{tr.foot_forAuthors}</h6>
             <ul>
-              <li><Link href="/for-authors">Məqalə göndər</Link></li>
-              <li><Link href="/for-authors">Müəllif təlimatı</Link></li>
-              <li><Link href="/ethics">Resenziya və etika</Link></li>
-              <li><Link href="/about">Açıq giriş</Link></li>
-              <li><Link href="/about">Redaksiya heyəti</Link></li>
+              <li><Link href="/for-authors">{tr.foot_submit}</Link></li>
+              <li><Link href="/for-authors">{tr.foot_guide}</Link></li>
+              <li><Link href="/ethics">{tr.foot_reviewEthics}</Link></li>
+              <li><Link href="/about">{tr.foot_openAccess}</Link></li>
+              <li><Link href="/about">{tr.foot_board}</Link></li>
             </ul>
           </div>
           <div>
-            <h6>İndeksləşmə və standartlar</h6>
+            <h6>{tr.foot_indexing}</h6>
             <div className="foot__idx">
-              <span>DOAJ</span><span>CrossRef</span><span>ORCID</span><span>JATS XML</span><span>CC BY 4.0</span><span>PKP PN</span><span>Scopus/WoS hazırlıq</span>
+              <span>DOAJ</span><span>CrossRef</span><span>ORCID</span><span>JATS XML</span><span>CC BY 4.0</span><span>PKP PN</span><span>Scopus/WoS</span>
             </div>
           </div>
         </div>
         <div className="foot__bottom">
           <span className="meta">© 2026 ADDA · Elmi Əsərləri (CJMSE) · ISSN XXXX-XXXX</span>
-          <span className="disclaimer">Məzmun nümunə xarakterlidir; ISSN, DOI, redaksiya adları və metrikalar real dəyərlərlə əvəz olunmalıdır.</span>
+          <span className="disclaimer">{tr.foot_disclaimer}</span>
         </div>
       </div>
     </footer>

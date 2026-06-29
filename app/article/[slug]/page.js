@@ -71,7 +71,8 @@ export default async function ArticlePage({ params }) {
         </div>
 
         <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '2rem', lineHeight: 1.2, margin: '10px 0 6px' }}>{a.title}</h1>
-        {a.title_en && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.15rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 14px' }}>{a.title_en}</p>}
+        {a.title_en && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.15rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 4px' }}>{a.title_en}</p>}
+        {a.title_ru && <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.1rem', fontStyle: 'italic', color: 'var(--teal-d)', margin: '0 0 14px' }}>{a.title_ru}</p>}
 
         <div style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.7 }}>
           {authors.map((au, i) => (
@@ -100,23 +101,33 @@ export default async function ArticlePage({ params }) {
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '22px 0' }}>
-          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} target="_blank" rel="noopener noreferrer">PDF-i aç</a>}
-          {a.pdf_url && <a className="btn btn--ghost" href={a.pdf_url} download={`${a.slug}.pdf`}>PDF yüklə</a>}
+          {a.pdf_url && <a className="btn btn--primary" href={a.pdf_url} download={`${a.slug}.pdf`}>PDF yüklə</a>}
           {a.data_url && <a className="btn btn--ghost" href={a.data_url} target="_blank" rel="noopener noreferrer">Research data</a>}
         </div>
 
-        <h2 className="sec-title" style={{ fontSize: '1.1rem' }}>Xülasə</h2>
-        {a.abstract && <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--ink-2)' }}>{a.abstract}</p>}
-        {a.abstract_en && (
-          <>
-            <h3 style={{ fontFamily: 'var(--f-display)', fontSize: '1rem', color: 'var(--ink)', margin: '18px 0 8px' }}>Abstract (English)</h3>
-            <p style={{ fontSize: 15.5, lineHeight: 1.8, color: 'var(--ink-2)' }}>{a.abstract_en}</p>
-          </>
+        {a.abstract && (
+          <div style={{ marginTop: 24 }}>
+            <h2 className="abs-h">Xülasə</h2>
+            <p className="abs-t">{a.abstract}</p>
+          </div>
         )}
-        {(a.keywords || a.keywords_en) && (
+        {a.abstract_en && (
+          <div style={{ marginTop: 20 }}>
+            <h2 className="abs-h">Abstract (English)</h2>
+            <p className="abs-t">{a.abstract_en}</p>
+          </div>
+        )}
+        {a.abstract_ru && (
+          <div style={{ marginTop: 20 }}>
+            <h2 className="abs-h">Аннотация</h2>
+            <p className="abs-t">{a.abstract_ru}</p>
+          </div>
+        )}
+        {(a.keywords || a.keywords_en || a.keywords_ru) && (
           <div style={{ marginTop: 18 }}>
-            {a.keywords && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Açar sözlər: </b>{a.keywords}</p>}
-            {a.keywords_en && <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Keywords: </b>{a.keywords_en}</p>}
+            {a.keywords && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Açar sözlər: </b>{a.keywords}</p>}
+            {a.keywords_en && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Keywords: </b>{a.keywords_en}</p>}
+            {a.keywords_ru && <p style={{ fontSize: 14, color: '#111', margin: '4px 0' }}><b style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Ключевые слова: </b>{a.keywords_ru}</p>}
           </div>
         )}
 

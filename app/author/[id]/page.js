@@ -32,6 +32,7 @@ export default async function AuthorPage({ params }) {
         </h1>
         <div style={{ fontFamily: 'var(--f-mono)', fontSize: 13, color: 'var(--muted)', lineHeight: 2 }}>
           {author.affiliation && <div>{t.a_affiliation}: <span style={{ color: 'var(--ink-2)' }}>{author.affiliation}</span></div>}
+          {author.research_group && <div>{t.a_group}: <span style={{ color: 'var(--ink-2)' }}>{author.research_group}</span></div>}
           {author.orcid && <div>{t.a_orcid}: <a href={`https://orcid.org/${author.orcid}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>{author.orcid}</a></div>}
           {author.email && <div>{t.a_email}: <a href={`mailto:${author.email}`} style={{ color: 'var(--teal-d)' }}>{author.email}</a></div>}
         </div>

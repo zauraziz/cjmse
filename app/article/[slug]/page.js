@@ -140,6 +140,11 @@ export default async function ArticlePage({ params }) {
             {[...new Set(authors.map((au) => au.affiliation).filter(Boolean))].join(' · ')}
           </div>
         )}
+        {authors.some((au) => au.research_group) && (
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>
+            {t.a_group}: {[...new Set(authors.map((au) => au.research_group).filter(Boolean))].join(' · ')}
+          </div>
+        )}
 
         <div className="art__meta" style={{ marginTop: 14 }}>
           {a.udc && <span>{t.a_udc}: {a.udc}</span>}

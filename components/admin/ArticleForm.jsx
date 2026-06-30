@@ -18,10 +18,10 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
   const [type, setType] = useState(article?.type ?? 'research');
   const [rows, setRows] = useState(
     (article?.authorLinks || []).map((l) => ({
-      name: l.full_name || '', orcid: l.orcid || '', affiliation: l.affiliation || '', isCorresponding: l.is_corresponding,
+      name: l.full_name || '', orcid: l.orcid || '', affiliation: l.affiliation || '', research_group: l.research_group || '', isCorresponding: l.is_corresponding,
     }))
   );
-  const addRow = () => setRows((r) => [...r, { name: '', orcid: '', affiliation: '', isCorresponding: r.length === 0 }]);
+  const addRow = () => setRows((r) => [...r, { name: '', orcid: '', affiliation: '', research_group: '', isCorresponding: r.length === 0 }]);
   const update = (i, patch) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const remove = (i) => setRows((r) => r.filter((_, j) => j !== i));
   const move = (i, d) => setRows((r) => { const a = [...r]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });
@@ -118,6 +118,7 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
             <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
               <input placeholder="ORCID (ixtiyari)" value={row.orcid} onChange={(e) => update(i, { orcid: e.target.value })} style={{ flex: 1, minWidth: 150 }} />
               <input list="affil-dl" placeholder="Mənsubiyyət (siyahıdan seçin və ya yazın)" value={row.affiliation} onChange={(e) => update(i, { affiliation: e.target.value })} style={{ flex: 2, minWidth: 200 }} />
+              <input placeholder="Tədqiqat qrupu / şöbə (ixtiyari)" value={row.research_group} onChange={(e) => update(i, { research_group: e.target.value })} style={{ flex: 2, minWidth: 200 }} />
             </div>
           </div>
         ))}

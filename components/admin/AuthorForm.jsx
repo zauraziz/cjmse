@@ -7,6 +7,7 @@ export default function AuthorForm({ action, author }) {
       <div className="adm-field"><label>ORCID</label><input name="orcid" defaultValue={author?.orcid ?? ''} placeholder="0000-0000-0000-0000" /></div>
       <div className="adm-field"><label>E-poçt</label><input name="email" type="email" defaultValue={author?.email ?? ''} /></div>
       <div className="adm-field full"><label>Mənsubiyyət (affiliation)</label><input name="affiliation" defaultValue={author?.affiliation ?? ''} placeholder="ADDA · Dəniz nəqliyyatı" /></div>
+      <div className="adm-field full"><label>Tədqiqat qrupu / şöbə</label><input name="research_group" defaultValue={author?.research_group ?? ''} placeholder="Gəmi mexanikası kafedrası / Hidrodinamika qrupu" /></div>
       <div className="adm-actions"><button className="adm-btn" type="submit">{author ? 'Yadda saxla' : 'Müəllif əlavə et'}</button></div>
     </form>
   );

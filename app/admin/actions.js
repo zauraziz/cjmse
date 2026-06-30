@@ -7,7 +7,7 @@ import { randomBytes } from 'crypto';
 import { put } from '@vercel/blob';
 import { sql } from '@/lib/db';
 import { ADMIN_COOKIE, sessionToken, verifyPassword, isAuthed } from '@/lib/auth';
-import { sendEmail, submissionEmailHtml, statusEmailHtml } from '@/lib/email';
+import { sendEmail, submissionEmailHtml, statusEmailHtml, reviewInviteHtml } from '@/lib/email';
 import { statusLabel } from '@/lib/status';
 
 const TYPES = ['research', 'review', 'technical', 'short', 'editorial', 'casestudy'];
@@ -113,8 +113,8 @@ async function setAuthors(articleId, formData, clear) {
       aid = found[0].id;                    // mövcud müəllif — təkrar yaratma
     } else {
       const ins = await sql.query(
-        `insert into authors (full_name, orcid, affiliation) values ($1,$2,$3) returning id`,
-        [name, (a.orcid || '').trim() || null, (a.affiliation || '').trim() || null]);
+        `insert into authors (full_name, orcid, affiliation, research_group) values ($1,$2,$3,$4) returning id`,
+        [name, (a.orcid || '').trim() || null, (a.affiliation || '').trim() || null, (a.research_group || '').trim() || null]);
       aid = ins[0].id;                      // yeni müəllif — avtomatik yaradılır
     }
     await sql.query(
@@ -191,8 +191,8 @@ export async function createAuthor(formData) {
   const dup = await sql.query(`select id from authors where lower(trim(full_name)) = lower(trim($1)) limit 1`, [name]);
   if (dup[0]) { revalidateAll(); redirect('/admin/authors?exists=1'); }
   await sql.query(
-    `insert into authors (full_name, orcid, affiliation, email) values ($1,$2,$3,$4)`,
-    [name, str(formData.get('orcid')), str(formData.get('affiliation')), str(formData.get('email'))]);
+    `insert into authors (full_name, orcid, affiliation, research_group, email) values ($1,$2,$3,$4,$5)`,
+    [name, str(formData.get('orcid')), str(formData.get('affiliation')), str(formData.get('research_group')), str(formData.get('email'))]);
   revalidateAll();
   redirect('/admin/authors');
 }
@@ -202,9 +202,9 @@ export async function updateAuthor(formData) {
   const id = uuid(formData.get('id'));
   if (!id) redirect('/admin/authors');
   await sql.query(
-    `update authors set full_name=$1, orcid=$2, affiliation=$3, email=$4 where id=$5`,
+    `update authors set full_name=$1, orcid=$2, affiliation=$3, research_group=$4, email=$5 where id=$6`,
     [str(formData.get('full_name')), str(formData.get('orcid')),
-     str(formData.get('affiliation')), str(formData.get('email')), id]);
+     str(formData.get('affiliation')), str(formData.get('research_group')), str(formData.get('email')), id]);
   revalidateAll();
   redirect('/admin/authors');
 }
@@ -359,4 +359,122 @@ export async function deleteSubmission(formData) {
   const id = uuid(formData.get('id'));
   if (id) await sql.query(`delete from submissions where id = $1`, [id]);
   revalidatePath('/admin/submissions');
+}
+
+/* ---------------- editorial workflow (reviewers + review rounds) ---------------- */
+async function findOrCreateAuthor(name, orcid, affiliation, email) {
+  const found = await sql.query(`select id from authors where lower(trim(full_name)) = lower(trim($1)) limit 1`, [name]);
+  if (found[0]) return found[0].id;
+  const ins = await sql.query(
+    `insert into authors (full_name, orcid, affiliation, email) values ($1,$2,$3,$4) returning id`,
+    [name, orcid, affiliation, email]);
+  return ins[0].id;
+}
+
+export async function createReviewer(formData) {
+  guard();
+  const name = str(formData.get('full_name'));
+  if (!name) redirect('/admin/reviewers?error=1');
+  await sql.query(`insert into reviewers (full_name, email, affiliation) values ($1,$2,$3)`,
+    [name, str(formData.get('email')), str(formData.get('affiliation'))]);
+  revalidatePath('/admin/reviewers');
+  redirect('/admin/reviewers');
+}
+
+export async function deleteReviewer(formData) {
+  guard();
+  const id = uuid(formData.get('id'));
+  if (id) await sql.query(`delete from reviewers where id = $1`, [id]);
+  revalidatePath('/admin/reviewers');
+}
+
+export async function assignReviewer(formData) {
+  guard();
+  const submissionId = uuid(formData.get('submission_id'));
+  const reviewerId = uuid(formData.get('reviewer_id'));
+  if (!submissionId || !reviewerId) redirect('/admin/submissions');
+  const rev = await sql.query(`select full_name, email from reviewers where id = $1`, [reviewerId]);
+  if (!rev[0]) redirect(`/admin/submissions/${submissionId}`);
+  const subs = await sql.query(`select title, round from submissions where id = $1`, [submissionId]);
+  const round = int(formData.get('round')) || subs[0]?.round || 1;
+  const due = dateVal(formData.get('due_date'));
+  const token = randomBytes(18).toString('hex');
+  await sql.query(
+    `insert into review_assignments
+       (submission_id, reviewer_id, reviewer_name, reviewer_email, token, round, status, due_date)
+     values ($1,$2,$3,$4,$5,$6,'invited',$7)`,
+    [submissionId, reviewerId, rev[0].full_name, rev[0].email, token, round, due]);
+  await sql.query(`update submissions set status='under_review', round=$2, updated_at=now() where id=$1`, [submissionId, round]);
+  if (rev[0].email) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+    await sendEmail({
+      to: rev[0].email,
+      subject: 'CJMSE — Resenziya dəvəti',
+      html: reviewInviteHtml(subs[0]?.title || 'Əlyazma', `${site}/review/${token}`, due),
+    });
+  }
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  redirect(`/admin/submissions/${submissionId}`);
+}
+
+// PUBLIC — resenzent token ilə rəy təqdim edir (login yoxdur)
+export async function submitReview(formData) {
+  const token = str(formData.get('token'));
+  if (!token) redirect('/');
+  const r = await sql.query(
+    `update review_assignments
+       set recommendation=$1, comments_to_editor=$2, comments_to_author=$3, status='submitted', submitted_at=now()
+     where token=$4 returning submission_id`,
+    [str(formData.get('recommendation')), str(formData.get('comments_to_editor')), str(formData.get('comments_to_author')), token]);
+  if (r[0]) revalidatePath(`/admin/submissions/${r[0].submission_id}`);
+  redirect(`/review/${token}?done=1`);
+}
+
+// Qəbul olunmuş təqdimatı jurnalın strukturunda məqaləyə çevir
+export async function publishSubmission(formData) {
+  guard();
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/submissions');
+  const subs = await sql.query(`select * from submissions where id = $1`, [id]);
+  const sub = subs[0];
+  if (!sub) redirect('/admin/submissions');
+  if (sub.article_id) redirect(`/admin/articles/${sub.article_id}`);
+
+  const doi = str(formData.get('doi')) || sub.doi || null;
+  let base = doi ? slugify(doi.split('/').pop()) : slugify(sub.title);
+  if (!base) base = 'article';
+  let slug = base, n = 1;
+  while ((await sql.query(`select 1 from articles where slug = $1`, [slug])).length) slug = `${base}-${++n}`;
+
+  const ins = await sql.query(
+    `insert into articles (slug,title,abstract,keywords,type,subject_id,language,doi,pdf_url,published_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,now()) returning id`,
+    [slug, sub.title, sub.abstract, sub.keywords, sub.type || 'research', sub.subject_id, sub.language || 'az', doi, sub.manuscript_file_url || null]);
+  const articleId = ins[0].id;
+
+  let pos = 1;
+  if (sub.author_name) {
+    const aid = await findOrCreateAuthor(sub.author_name, null, null, sub.email);
+    await sql.query(`insert into article_authors (article_id, author_id, author_position, is_corresponding) values ($1,$2,$3,true) on conflict (article_id, author_id) do nothing`, [articleId, aid, pos++]);
+  }
+  for (const line of (sub.coauthors || '').split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    const parts = t.split('—');
+    const name = (parts[0] || '').trim();
+    if (!name) continue;
+    const aff = parts.slice(1).join('—').trim() || null;
+    const aid = await findOrCreateAuthor(name, null, aff, null);
+    await sql.query(`insert into article_authors (article_id, author_id, author_position, is_corresponding) values ($1,$2,$3,false) on conflict (article_id, author_id) do nothing`, [articleId, aid, pos++]);
+  }
+
+  await sql.query(`update submissions set article_id=$1, doi=$2, status='published', updated_at=now() where id=$3`, [articleId, doi, id]);
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+  await sendEmail({
+    to: sub.email,
+    subject: 'CJMSE — Məqaləniz nəşr olundu',
+    html: statusEmailHtml(sub.title, statusLabel('published', 'az'), 'Məqaləniz jurnalın strukturunda dərc olundu. Redaksiya yekun tərtibatı tamamlayır.', `${site}/track/${sub.token}`),
+  });
+  revalidateAll();
+  redirect(`/admin/articles/${articleId}`);
 }

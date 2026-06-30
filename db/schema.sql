@@ -40,6 +40,7 @@ create table authors (
   full_name    text not null,
   orcid        text,                       -- 0000-0000-0000-0000
   affiliation  text,
+  research_group text,
   email        text,
   created_at   timestamptz default now()
 );
@@ -113,10 +114,30 @@ create table reviewers (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid references users(id) on delete set null,
   full_name   text not null,
+  email       text,
   orcid       text,
   affiliation text,
-  expertise   text[]
+  expertise   text,
+  created_at  timestamptz default now()
 );
+
+create table review_assignments (
+  id                 uuid primary key default gen_random_uuid(),
+  submission_id      uuid references submissions(id) on delete cascade,
+  reviewer_id        uuid references reviewers(id)   on delete set null,
+  reviewer_name      text,
+  reviewer_email     text,
+  token              text unique not null,
+  round              int  default 1,
+  status             text not null default 'invited',
+  recommendation     text,
+  comments_to_editor text,
+  comments_to_author text,
+  due_date           date,
+  created_at         timestamptz default now(),
+  submitted_at       timestamptz
+);
+create index idx_ra_sub on review_assignments(submission_id);
 
 -- ---------- Təqdimatlar (submissions) + izləmə ----------
 create table submissions (
@@ -134,6 +155,9 @@ create table submissions (
   manuscript_url      text,
   manuscript_file_url text,
   figures_urls        text,
+  doi                 text,
+  round               int default 1,
+  article_id          uuid references articles(id) on delete set null,
   status              text not null default 'submitted',
   note                text,
   created_at          timestamptz default now(),

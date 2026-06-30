@@ -43,9 +43,17 @@ export default function SubmitForm({ action, subjects = [] }) {
       <div className="adm-field full"><label>Xülasə</label><textarea name="abstract" placeholder="150–250 söz" /></div>
       <div className="adm-field full"><label>Açar sözlər (vergüllə, 5–8)</label><input name="keywords" /></div>
 
-      <div className="adm-field full"><label>Əlyazmanın keçidi (URL) *</label>
-        <input name="manuscript_url" required placeholder="Google Drive / Dropbox / OneDrive paylaşım linki" />
-        <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>Anonim resenziya üçün fayldan müəllif adlarını çıxarın. Faylı paylaşıma açıq qoyun.</span>
+      <div className="adm-field full"><label>Əlyazma faylı (Word / LaTeX / PDF)</label>
+        <input type="file" name="manuscript_file" accept=".doc,.docx,.tex,.pdf,.zip,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/zip" />
+        <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>.docx, .doc, .tex, .pdf və ya .zip (LaTeX layihəsi). Anonim resenziya üçün fayldan müəllif adlarını çıxarın.</span>
+      </div>
+      <div className="adm-field full"><label>Şəkillər və qrafiklər (bir neçə fayl)</label>
+        <input type="file" name="figures" multiple accept="image/*,.zip,.eps,.tif,.tiff" />
+        <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>PNG, JPG, TIFF, EPS və ya .zip. Yüksək ayırdetmə (≥300 dpi) tövsiyə olunur.</span>
+      </div>
+      <div className="adm-field full"><label>və ya əlyazmanın keçidi (URL)</label>
+        <input name="manuscript_url" placeholder="Google Drive / Dropbox / OneDrive paylaşım linki" />
+        <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>Fayl yükləmək əvəzinə (və ya çox böyük fayllar üçün) paylaşıma açıq link verə bilərsiniz. Ən azı fayl və ya link tələb olunur.</span>
       </div>
 
       <div className="adm-actions" style={{ marginTop: 8 }}>

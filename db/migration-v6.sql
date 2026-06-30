@@ -1,12 +1,14 @@
 -- ============================================================
--- CJMSE — Migrasiya v6
---  • Məqalə növü sütununu mətnə çevir (yeni növlər: keys-stadi və s.)
---  • Köhnə avtomatik nömrə başlıqlarını təmizlə (redaktə xətası #9)
---  • Göndərmə (submission) və izləmə sistemi üçün cədvəl
+-- CJMSE — Migrasiya v6 (DÜZƏLİŞ EDİLMİŞ)
+--  • article_type enum -> text (yeni növlər: keys-stadi və s.)
+--  • Köhnə avtomatik nömrə başlıqlarını təmizlə (#9)
+--  • Köhnə (istifadəsiz) submissions/submission_events cədvəllərini
+--    yeni göndərmə + izləmə strukturu ilə əvəz et
+--  • Əlyazma (Word/LaTeX) və şəkil fayllarının saxlanması üçün cədvəl
 -- Neon SQL Editor-də bir dəfə işə salın. Təkrar təhlükəsizdir.
 -- ============================================================
 
--- 1) article_type enum -> text (yeni növlər üçün rahatlıq)
+-- 1) article_type enum -> text
 do $$
 begin
   if exists (select 1 from information_schema.columns
@@ -17,28 +19,47 @@ begin
   end if;
 end $$;
 
--- 2) Köhnə avtomatik başlıqları NULL et — artıq cild/nömrə/ildən hesablanır
+-- 2) Köhnə avtomatik başlıqları NULL et (cild/nömrə/ildən hesablanır)
 update issues set title = null
  where title is not null and title ~ '^Cild [0-9]+, № [0-9]+ \([0-9]+\)$';
 
--- 3) Göndərmə cədvəli (passwordless izləmə üçün token ilə)
-create table if not exists submissions (
-  id             uuid primary key default gen_random_uuid(),
-  token          text unique not null,
-  title          text not null,
-  author_name    text not null,
-  email          text not null,
-  coauthors      text,
-  type           text default 'research',
-  language       text default 'az',
-  subject_id     uuid references subjects(id) on delete set null,
-  abstract       text,
-  keywords       text,
-  manuscript_url text,
-  status         text not null default 'submitted',
-  note           text,
-  created_at     timestamptz default now(),
-  updated_at     timestamptz default now()
+-- 3) Köhnə editorial submissions strukturunu sil və yenisini yarat.
+--    (Köhnə "submissions"-də code NOT NULL idi və yeni sistemlə uyğun deyil;
+--     real təqdimat datası yox idi — təhlükəsizdir.)
+drop table if exists submission_events cascade;
+drop table if exists submissions cascade;
+
+create table submissions (
+  id                  uuid primary key default gen_random_uuid(),
+  token               text unique not null,
+  title               text not null,
+  author_name         text not null,
+  email               text not null,
+  coauthors           text,
+  type                text default 'research',
+  language            text default 'az',
+  subject_id          uuid references subjects(id) on delete set null,
+  abstract            text,
+  keywords            text,
+  manuscript_url      text,
+  manuscript_file_url text,
+  figures_urls        text,
+  status              text not null default 'submitted',
+  note                text,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
 );
-create index if not exists idx_submissions_status on submissions(status);
-create index if not exists idx_submissions_email  on submissions(lower(email));
+create index idx_submissions_status on submissions(status);
+create index idx_submissions_email  on submissions(lower(email));
+
+-- 4) Yüklənmiş fayllar (Blob aktiv deyilsə, bazada saxlama üçün)
+create table if not exists submission_files (
+  id            uuid primary key default gen_random_uuid(),
+  submission_id uuid references submissions(id) on delete cascade,
+  kind          text,                 -- 'manuscript' | 'figure'
+  filename      text,
+  mime          text,
+  data          text,                 -- base64
+  created_at    timestamptz default now()
+);
+create index if not exists idx_subfiles_sub on submission_files(submission_id);

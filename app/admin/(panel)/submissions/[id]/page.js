@@ -13,6 +13,8 @@ const ALL_STATUSES = [...STATUS_ORDER, 'rejected'];
 export default async function SubmissionDetail({ params }) {
   const s = await getSubmissionById(params.id);
   if (!s) notFound();
+  let figUrls = [];
+  try { figUrls = JSON.parse(s.figures_urls || '[]'); } catch { figUrls = []; }
   const site = process.env.NEXT_PUBLIC_SITE_URL || '';
   return (
     <div>
@@ -26,7 +28,9 @@ export default async function SubmissionDetail({ params }) {
           {s.coauthors && <div><b>Digər müəlliflər:</b> {s.coauthors}</div>}
           <div><b>Növ:</b> {TYPE_LABEL[s.type] || s.type} · <b>Dil:</b> {s.language}</div>
           {s.keywords && <div><b>Açar sözlər:</b> {s.keywords}</div>}
-          {s.manuscript_url && <div><b>Əlyazma:</b> <a href={s.manuscript_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>{s.manuscript_url}</a></div>}
+          {s.manuscript_file_url && <div><b>Əlyazma faylı:</b> <a href={s.manuscript_file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>yüklə / bax ↓</a></div>}
+          {s.manuscript_url && <div><b>Əlyazma keçidi:</b> <a href={s.manuscript_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>{s.manuscript_url}</a></div>}
+          {figUrls.length > 0 && <div><b>Şəkillər:</b> {figUrls.map((u, i) => <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)', marginRight: 8 }}>#{i + 1}</a>)}</div>}
           <div><b>Təqdim:</b> {fmtDate(s.created_at)} · <b>Yenilənmə:</b> {fmtDate(s.updated_at)}</div>
           <div><b>İzləmə keçidi:</b> <a href={`/track/${s.token}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>{site}/track/{s.token}</a></div>
         </div>

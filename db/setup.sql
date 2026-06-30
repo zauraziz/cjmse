@@ -1,7 +1,7 @@
 -- ============================================================
 -- CJMSE — TAM QURAŞDIRMA (təkrar işə salmaq təhlükəsizdir)
 -- ============================================================
-DROP TABLE IF EXISTS submissions, article_pdfs, article_keywords, article_authors, reviews, submission_events, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
+DROP TABLE IF EXISTS submission_files, submissions, article_pdfs, article_keywords, article_authors, reviews, submission_events, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
 DROP TYPE IF EXISTS recommendation, submission_status, user_role, article_type CASCADE;
 
 -- STRUKTUR
@@ -125,32 +125,39 @@ create table reviewers (
   expertise   text[]
 );
 
--- ---------- Təqdimatlar (manuscript submissions) ----------
+-- ---------- Təqdimatlar (submissions) + izləmə ----------
 create table submissions (
   id                  uuid primary key default gen_random_uuid(),
-  code                text unique not null,        -- DN-2026-0142
+  token               text unique not null,
   title               text not null,
-  abstract            text,
+  author_name         text not null,
+  email               text not null,
+  coauthors           text,
+  type                text default 'research',
+  language            text default 'az',
   subject_id          uuid references subjects(id) on delete set null,
-  corresponding_user  uuid references users(id)    on delete set null,
-  status              submission_status not null default 'submitted',
-  current_stage       int default 0,               -- 0..5 (stepper)
+  abstract            text,
+  keywords            text,
   manuscript_url      text,
-  submitted_at        timestamptz default now(),
-  decided_at          timestamptz
+  manuscript_file_url text,
+  figures_urls        text,
+  status              text not null default 'submitted',
+  note                text,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
 );
-create index idx_sub_status on submissions(status);
-create index idx_sub_code    on submissions(code);
+create index idx_submissions_status on submissions(status);
 
--- ---------- Status hadisələri (izləyici jurnalı) ----------
-create table submission_events (
-  id             uuid primary key default gen_random_uuid(),
-  submission_id  uuid references submissions(id) on delete cascade,
-  stage_label    text not null,               -- "Resenziyada"
-  note           text,
-  created_at     timestamptz default now()
+create table submission_files (
+  id            uuid primary key default gen_random_uuid(),
+  submission_id uuid references submissions(id) on delete cascade,
+  kind          text,
+  filename      text,
+  mime          text,
+  data          text,
+  created_at    timestamptz default now()
 );
-create index idx_events_sub on submission_events(submission_id, created_at);
+create index idx_subfiles_sub on submission_files(submission_id);
 
 -- ---------- Resenziyalar ----------
 create table reviews (

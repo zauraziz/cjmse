@@ -2,7 +2,7 @@
 const nextConfig = {
   optimizeFonts: false,
   experimental: {
-    serverActions: { bodySizeLimit: '4mb' },
+    serverActions: { bodySizeLimit: '10mb' },
   },
 };
 export default nextConfig;

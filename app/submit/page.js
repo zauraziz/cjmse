@@ -24,7 +24,7 @@ export default async function SubmitPage({ searchParams }) {
         </p>
         {err && (
           <div style={{ background: '#fdecea', color: '#b3261e', border: '1px solid #f3c2bd', borderRadius: 10, padding: '11px 14px', fontSize: 14, margin: '14px 0' }}>
-            {err === 'spam' ? 'Təqdimat qəbul edilmədi.' : 'Zəruri sahələri (başlıq, müəllif, e-poçt) doldurun.'}
+            {err === 'spam' ? 'Təqdimat qəbul edilmədi.' : err === 'file' ? 'Əlyazma faylı yükləyin və ya keçid (URL) daxil edin.' : 'Zəruri sahələri (başlıq, müəllif, e-poçt) doldurun.'}
           </div>
         )}
         <div className="adm-sec" style={{ marginTop: 16 }}>

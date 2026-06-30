@@ -73,6 +73,27 @@ async function storePdf(formData, articleId, slug) {
   }
 }
 
+async function storeSubmissionFile(file, submissionId, kind, token) {
+  if (!file || typeof file === 'string' || !file.size) return null;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const ext = ((file.name || '').split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) || 'bin';
+    try {
+      const blob = await put(`submissions/${token}/${kind}-${Date.now()}.${ext}`, file, { access: 'public' });
+      return blob.url;
+    } catch (e) { console.error('submission blob upload failed:', e?.message); return null; }
+  }
+  try {
+    const b64 = Buffer.from(await file.arrayBuffer()).toString('base64');
+    const r = await sql.query(
+      `insert into submission_files (submission_id, kind, filename, mime, data) values ($1,$2,$3,$4,$5) returning id`,
+      [submissionId, kind, str(file.name) || kind, file.type || 'application/octet-stream', b64]);
+    return `/submission-file/${r[0].id}`;
+  } catch (e) {
+    console.error('submission file DB store failed (run migration-v6.sql):', e?.message);
+    return null;
+  }
+}
+
 async function setAuthors(articleId, formData, clear) {
   if (clear) await sql.query(`delete from article_authors where article_id = $1`, [articleId]);
   let authors = [];
@@ -272,15 +293,34 @@ export async function createSubmission(formData) {
   const email = str(formData.get('email'));
   if (!title || !author_name || !email) redirect('/submit?error=1');
 
+  const manuscriptUrl = str(formData.get('manuscript_url'));
+  const mf = formData.get('manuscript_file');
+  const hasFile = mf && typeof mf !== 'string' && mf.size > 0;
+  if (!manuscriptUrl && !hasFile) redirect('/submit?error=file');
+
   const token = randomBytes(18).toString('hex');
-  await sql.query(
+  const ins = await sql.query(
     `insert into submissions
        (token,title,author_name,email,coauthors,type,language,subject_id,abstract,keywords,manuscript_url,status)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'submitted')`,
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'submitted')
+     returning id`,
     [token, title, author_name, email, str(formData.get('coauthors')),
      enumVal(formData.get('type'), TYPES, 'research'), str(formData.get('language')) || 'az',
      uuid(formData.get('subject_id')), str(formData.get('abstract')), str(formData.get('keywords')),
-     str(formData.get('manuscript_url'))]);
+     manuscriptUrl]);
+  const subId = ins[0].id;
+
+  // uploaded files: manuscript (Word/LaTeX/PDF) + figures (images)
+  const manuscriptFileUrl = await storeSubmissionFile(formData.get('manuscript_file'), subId, 'manuscript', token);
+  const figUrls = [];
+  for (const f of formData.getAll('figures')) {
+    const u = await storeSubmissionFile(f, subId, 'figure', token);
+    if (u) figUrls.push(u);
+  }
+  if (manuscriptFileUrl || figUrls.length) {
+    await sql.query(`update submissions set manuscript_file_url=$1, figures_urls=$2 where id=$3`,
+      [manuscriptFileUrl, figUrls.length ? JSON.stringify(figUrls) : null, subId]);
+  }
 
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
   await sendEmail({

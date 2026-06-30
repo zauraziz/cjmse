@@ -17,6 +17,8 @@ export default async function TrackPage({ params, searchParams }) {
   const isNew = searchParams?.new;
   const rejected = sub.status === 'rejected';
   const currentStep = STATUS_ORDER.indexOf(sub.status);
+  let figUrls = [];
+  try { figUrls = JSON.parse(sub.figures_urls || '[]'); } catch { figUrls = []; }
 
   return (
     <section className="band">
@@ -59,7 +61,9 @@ export default async function TrackPage({ params, searchParams }) {
           {sub.coauthors && <div><b>Digər müəlliflər:</b> {sub.coauthors}</div>}
           {sub.subject_az && <div><b>Sahə:</b> {sub.subject_az}</div>}
           {sub.keywords && <div><b>Açar sözlər:</b> {sub.keywords}</div>}
-          {sub.manuscript_url && <div><b>Əlyazma:</b> <a href={sub.manuscript_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>keçid ↗</a></div>}
+          {sub.manuscript_file_url && <div><b>Əlyazma faylı:</b> <a href={sub.manuscript_file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>yüklə ↓</a></div>}
+          {sub.manuscript_url && <div><b>Əlyazma keçidi:</b> <a href={sub.manuscript_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)' }}>keçid ↗</a></div>}
+          {figUrls.length > 0 && <div><b>Şəkillər:</b> {figUrls.map((u, i) => <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)', marginRight: 8 }}>#{i + 1}</a>)}</div>}
         </div>
         {sub.abstract && (<><h2 className="abs-h" style={{ marginTop: 20 }}>Xülasə</h2><p className="abs-t">{sub.abstract}</p></>)}
       </div>

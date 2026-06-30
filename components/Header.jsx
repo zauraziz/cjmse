@@ -28,9 +28,11 @@ export default function Header({ lang = 'az', t }) {
         <div className="wrap topbar__in">
           <span className="topbar__l">{tr.topInfo}</span>
           <nav className="topbar__r" aria-label="Köməkçi keçidlər">
-            <Link href="/for-authors">{tr.nav_authors}</Link><span className="sep" />
-            <Link href="/ethics">{tr.nav_ethics}</Link><span className="sep" />
-            <Link href="/about">{tr.nav_about}</Link><span className="sep" />
+            <Link href="/information/readers">{tr.foot_readers}</Link><span className="sep" />
+            <Link href="/information/authors">{tr.foot_authorsInfo}</Link><span className="sep" />
+            <Link href="/information/librarians">{tr.foot_librarians}</Link><span className="sep" />
+            <Link href="/contact">{tr.nav_contact}</Link><span className="sep" />
+            <Link href="/faq">{tr.nav_faq}</Link><span className="sep" />
             <LangSwitch current={lang} />
           </nav>
         </div>

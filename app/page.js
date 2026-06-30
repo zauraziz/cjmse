@@ -10,10 +10,13 @@ import {
   getMetrics, getSubjectsWithCounts, getCurrentIssue, getArticlesInIssue,
   getLatestArticles, getMostRead, getMostCited, getFaqs,
 } from '@/lib/queries';
+import { getT, getLang } from '@/lib/serverLang';
 
 const OJS = process.env.NEXT_PUBLIC_OJS_URL || '#';
 
 export default async function Home() {
+  const t = getT();
+  const lang = getLang();
   const current = await getCurrentIssue();
   const [metrics, subjects, latest, mostRead, mostCited, faqs, currentArticles] = await Promise.all([
     getMetrics(), getSubjectsWithCounts(), getLatestArticles(6), getMostRead(5),
@@ -29,21 +32,18 @@ export default async function Home() {
             <Cover volume={current?.volume ?? 27} number={current?.number ?? 2} year={current?.year ?? 2026} />
             <div className="hero__main">
               <div className="hero__issue">
-                <span className="pulse" />Cari nömrə · {current?.title ?? 'Cild 27, № 2 (2026)'}
+                <span className="pulse" />{t.a_currentIssue} · {current?.title || (current ? `${t.a_vol} ${current.volume}, № ${current.number} (${current.year})` : `${t.a_vol} 27, № 2 (2026)`)}
               </div>
-              <h1>Dənizçilik və mühəndislik elmlərinin açıq giriş jurnalı</h1>
+              <h1>{t.hero_title}</h1>
               <p style={{ fontFamily: 'var(--f-display)', fontSize: '1.18rem', color: 'var(--teal-d)', marginTop: 10, fontStyle: 'italic' }}>
-                Caspian Journal of Maritime Science &amp; Engineering (CJMSE)
+                {t.hero_sub}
               </p>
-              <p className="scope">
-                Orijinal tədqiqat, icmal və texniki məqalələr — ikili kor resenziya, rəqəmsal redaksiya prosesi və
-                beynəlxalq indeksləşmə ilə. Hər məqalə pulsuz oxunur və yenidən istifadəyə açıqdır.
-              </p>
+              <p className="scope">{t.hero_desc}</p>
               <div className="hero__cta">
-                <Link className="btn btn--primary" href="/articles">Məqalələrə bax
+                <Link className="btn btn--primary" href="/articles">{t.hero_browse}
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                 </Link>
-                <Link className="btn btn--ghost" href="/issues">Bütün nömrələr</Link>
+                <Link className="btn btn--ghost" href="/issues">{t.a_archiveTitle}</Link>
               </div>
               <div className="hero__idx">
                 <span className="idx-badge"><b>DOAJ</b></span>

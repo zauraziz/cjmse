@@ -27,6 +27,9 @@ export default async function SubmissionDetail({ params }) {
         <Link href="/admin/submissions" style={{ fontFamily: 'var(--f-mono)', fontSize: 12.5, color: 'var(--teal-d)' }}>← Göndərmələr</Link>
       </div>
       <h1 className="adm-h1">{s.title}</h1>
+      <div style={{ marginBottom: 14 }}>
+        <Link className="adm-btn adm-btn--ghost" href={`/admin/submissions/${s.id}/edit`} style={{ padding: '7px 14px' }}>✎ Bütün məlumatları redaktə et</Link>
+      </div>
 
       <div className="adm-sec">
         <div style={{ fontSize: 14, lineHeight: 1.9, color: 'var(--ink-2)' }}>

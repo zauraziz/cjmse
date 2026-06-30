@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import { getSubmissionByToken } from '@/lib/queries';
+import { updateSubmissionByToken } from '@/app/admin/actions';
 import { fmtDate } from '@/lib/format';
 import { getLang, getT } from '@/lib/serverLang';
 import { STATUS_ORDER, statusLabel } from '@/lib/status';
@@ -15,6 +16,7 @@ export default async function TrackPage({ params, searchParams }) {
   const lang = getLang();
   const t = getT();
   const isNew = searchParams?.new;
+  const updated = searchParams?.updated;
   const rejected = sub.status === 'rejected';
   const currentStep = STATUS_ORDER.indexOf(sub.status);
   let figUrls = [];
@@ -26,6 +28,11 @@ export default async function TrackPage({ params, searchParams }) {
         {isNew && (
           <div style={{ background: '#e7f6ec', color: '#1a7f37', border: '1px solid #acdcb8', borderRadius: 10, padding: '12px 14px', fontSize: 14, marginBottom: 18 }}>
             ✓ Məqaləniz təqdim edildi. İzləmə keçidi e-poçtunuza göndərildi — bu səhifəni yadda saxlaya (bookmark) bilərsiniz.
+          </div>
+        )}
+        {updated && (
+          <div style={{ background: '#e7f6ec', color: '#1a7f37', border: '1px solid #acdcb8', borderRadius: 10, padding: '12px 14px', fontSize: 14, marginBottom: 18 }}>
+            ✓ Yeniləməniz qeydə alındı və redaksiyaya bildirildi.
           </div>
         )}
         <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '1.7rem', margin: '0 0 6px' }}>{sub.title}</h1>
@@ -66,6 +73,27 @@ export default async function TrackPage({ params, searchParams }) {
           {figUrls.length > 0 && <div><b>Şəkillər:</b> {figUrls.map((u, i) => <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal-d)', marginRight: 8 }}>#{i + 1}</a>)}</div>}
         </div>
         {sub.abstract && (<><h2 className="abs-h" style={{ marginTop: 20 }}>Xülasə</h2><p className="abs-t">{sub.abstract}</p></>)}
+
+        <details style={{ marginTop: 26, border: '1px solid var(--line)', borderRadius: 12, padding: '14px 16px', background: '#fff' }}>
+          <summary style={{ cursor: 'pointer', fontFamily: 'var(--f-display)', fontSize: '1.05rem', color: 'var(--ink)' }}>
+            Məlumatları yenilə / düzəliş yüklə
+          </summary>
+          <p style={{ fontSize: 13, color: 'var(--muted)', margin: '10px 0' }}>
+            Redaksiya düzəliş tələb edibsə, yenilənmiş əlyazmanı buradan yükləyə və məlumatları redaktə edə bilərsiniz. Dəyişiklik avtomatik olaraq redaksiyaya bildirilir.
+          </p>
+          <form action={updateSubmissionByToken} className="adm-form">
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1 }} aria-hidden="true" />
+            <input type="hidden" name="token" value={params.token} />
+            <div className="adm-field full"><label>Başlıq</label><input name="title" defaultValue={sub.title ?? ''} /></div>
+            <div className="adm-field full"><label>Digər müəlliflər</label><textarea name="coauthors" defaultValue={sub.coauthors ?? ''} /></div>
+            <div className="adm-field full"><label>Açar sözlər</label><input name="keywords" defaultValue={sub.keywords ?? ''} /></div>
+            <div className="adm-field full"><label>Xülasə</label><textarea name="abstract" defaultValue={sub.abstract ?? ''} /></div>
+            <div className="adm-field full"><label>Yenilənmiş əlyazma (Word / LaTeX / PDF)</label><input type="file" name="manuscript_file" accept=".doc,.docx,.tex,.pdf,.zip" /></div>
+            <div className="adm-field full"><label>və ya əlyazma keçidi (URL)</label><input name="manuscript_url" defaultValue={sub.manuscript_url ?? ''} /></div>
+            <div className="adm-field full"><label>Əlavə şəkillər</label><input type="file" name="figures" multiple accept="image/*,.zip,.eps,.tif,.tiff" /></div>
+            <div className="adm-actions"><button className="adm-btn" type="submit">Yenilə və göndər</button></div>
+          </form>
+        </details>
       </div>
     </section>
   );

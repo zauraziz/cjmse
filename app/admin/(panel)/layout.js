@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { logout } from '../actions';
+import { getAttentionCount } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 
-export default function PanelLayout({ children }) {
+export default async function PanelLayout({ children }) {
   requireAdmin();
+  const attention = await getAttentionCount();
   return (
     <div className="adm">
       <aside className="adm-side">
@@ -15,7 +17,10 @@ export default function PanelLayout({ children }) {
           <Link href="/admin/issues">Nömrələr</Link>
           <Link href="/admin/authors">Müəlliflər</Link>
           <Link href="/admin/articles">Məqalələr</Link>
-          <Link href="/admin/submissions">Göndərmələr</Link>
+          <Link href="/admin/submissions">
+            Göndərmələr
+            {attention > 0 && <span style={{ marginLeft: 8, background: '#b3261e', color: '#fff', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>{attention}</span>}
+          </Link>
           <Link href="/admin/reviewers">Resenzentlər</Link>
           <Link href="/">↗ Sayta bax</Link>
         </nav>

@@ -8,6 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@citation-js/core": "^0.7.21",
+    "@citation-js/plugin-bibtex": "^0.7.21",
+    "@citation-js/plugin-csl": "^0.7.22",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/blob": "^2.4.1",
     "next": "14.2",

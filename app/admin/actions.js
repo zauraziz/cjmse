@@ -7,7 +7,7 @@ import { randomBytes } from 'crypto';
 import { put } from '@vercel/blob';
 import { sql } from '@/lib/db';
 import { ADMIN_COOKIE, sessionToken, verifyPassword, isAuthed } from '@/lib/auth';
-import { sendEmail, submissionEmailHtml, statusEmailHtml, reviewInviteHtml } from '@/lib/email';
+import { sendEmail, submissionEmailHtml, statusEmailHtml, reviewInviteHtml, editorNotifyHtml } from '@/lib/email';
 import { statusLabel } from '@/lib/status';
 
 const TYPES = ['research', 'review', 'technical', 'short', 'editorial', 'casestudy'];
@@ -339,7 +339,7 @@ export async function updateSubmissionStatus(formData) {
   const status = str(formData.get('status')) || 'submitted';
   const note = str(formData.get('note'));
   const r = await sql.query(
-    `update submissions set status=$1, note=$2, updated_at=now() where id=$3 returning token, email, title`,
+    `update submissions set status=$1, note=$2, flag_for_editor=false, updated_at=now() where id=$3 returning token, email, title`,
     [status, note, id]);
   if (r[0]) {
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
@@ -426,7 +426,16 @@ export async function submitReview(formData) {
        set recommendation=$1, comments_to_editor=$2, comments_to_author=$3, status='submitted', submitted_at=now()
      where token=$4 returning submission_id`,
     [str(formData.get('recommendation')), str(formData.get('comments_to_editor')), str(formData.get('comments_to_author')), token]);
-  if (r[0]) revalidatePath(`/admin/submissions/${r[0].submission_id}`);
+  if (r[0]) {
+    revalidatePath(`/admin/submissions/${r[0].submission_id}`);
+    const editor = process.env.EDITOR_EMAIL;
+    if (editor) {
+      const subs = await sql.query(`select title from submissions where id=$1`, [r[0].submission_id]);
+      const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+      await sendEmail({ to: editor, subject: 'CJMSE — Yeni resenziya daxil oldu',
+        html: editorNotifyHtml(subs[0]?.title || 'Əlyazma', 'yeni resenziya rəyi daxil oldu', `${site}/admin/submissions/${r[0].submission_id}`) });
+    }
+  }
   redirect(`/review/${token}?done=1`);
 }
 
@@ -477,4 +486,66 @@ export async function publishSubmission(formData) {
   });
   revalidateAll();
   redirect(`/admin/articles/${articleId}`);
+}
+
+// Admin — bütün təqdimat məlumatlarını redaktə (qaydalara uyğunlaşdırma)
+export async function updateSubmission(formData) {
+  guard();
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/submissions');
+  await sql.query(
+    `update submissions set title=$1, author_name=$2, email=$3, coauthors=$4, type=$5, language=$6,
+       subject_id=$7, abstract=$8, keywords=$9, manuscript_url=$10, doi=$11, updated_at=now() where id=$12`,
+    [str(formData.get('title')) || 'Başlıqsız', str(formData.get('author_name')) || '—', str(formData.get('email')) || '—',
+     str(formData.get('coauthors')), enumVal(formData.get('type'), TYPES, 'research'), str(formData.get('language')) || 'az',
+     uuid(formData.get('subject_id')), str(formData.get('abstract')), str(formData.get('keywords')),
+     str(formData.get('manuscript_url')), str(formData.get('doi')), id]);
+  const row = await sql.query(`select token from submissions where id=$1`, [id]);
+  const token = row[0]?.token;
+  const mfu = await storeSubmissionFile(formData.get('manuscript_file'), id, 'manuscript', token);
+  if (mfu) await sql.query(`update submissions set manuscript_file_url=$1 where id=$2`, [mfu, id]);
+  await appendFigures(formData, id, token);
+  revalidatePath(`/admin/submissions/${id}`);
+  redirect(`/admin/submissions/${id}`);
+}
+
+// Müəllif — token ilə təqdimatı yeniləyir / düzəliş yükləyir (login yoxdur)
+export async function updateSubmissionByToken(formData) {
+  const token = str(formData.get('website')) ? null : str(formData.get('token'));
+  if (!token) redirect('/');
+  const r = await sql.query(`select id from submissions where token=$1`, [token]);
+  if (!r[0]) redirect('/');
+  const id = r[0].id;
+  await sql.query(
+    `update submissions set title=$1, coauthors=$2, abstract=$3, keywords=$4, manuscript_url=$5,
+       flag_for_editor=true, updated_at=now() where id=$6`,
+    [str(formData.get('title')) || 'Başlıqsız', str(formData.get('coauthors')), str(formData.get('abstract')),
+     str(formData.get('keywords')), str(formData.get('manuscript_url')), id]);
+  const mfu = await storeSubmissionFile(formData.get('manuscript_file'), id, 'manuscript', token);
+  if (mfu) await sql.query(`update submissions set manuscript_file_url=$1 where id=$2`, [mfu, id]);
+  await appendFigures(formData, id, token);
+  const editor = process.env.EDITOR_EMAIL;
+  if (editor) {
+    const subs = await sql.query(`select title from submissions where id=$1`, [id]);
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+    await sendEmail({ to: editor, subject: 'CJMSE — Müəllif təqdimatı yenilədi',
+      html: editorNotifyHtml(subs[0]?.title || 'Əlyazma', 'müəllif məlumatları/düzəlişi yenilədi', `${site}/admin/submissions/${id}`) });
+  }
+  revalidatePath(`/admin/submissions/${id}`);
+  redirect(`/track/${token}?updated=1`);
+}
+
+async function appendFigures(formData, id, token) {
+  const added = [];
+  for (const f of formData.getAll('figures')) {
+    const u = await storeSubmissionFile(f, id, 'figure', token);
+    if (u) added.push(u);
+  }
+  if (added.length) {
+    const cur = await sql.query(`select figures_urls from submissions where id=$1`, [id]);
+    let arr = [];
+    try { arr = JSON.parse(cur[0]?.figures_urls || '[]'); } catch { arr = []; }
+    arr = arr.concat(added);
+    await sql.query(`update submissions set figures_urls=$1 where id=$2`, [JSON.stringify(arr), id]);
+  }
 }

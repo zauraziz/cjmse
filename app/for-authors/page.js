@@ -147,6 +147,10 @@ export default function ForAuthorsPage() {
           <li>İkinci mənbədən istinad: <b>(Fisher 1990, Tupper 2013-dən)</b>;</li>
           <li>İnternet ünvanları üçün daxilolma tarixi göstərilir və mənbələrə daxil edilir.</li>
         </ul>
+        <p style={p}>
+          <b>İstinadları avtomatik formatlayın:</b> mənbələrinizi Zotero/Mendeley-dən BibTeX və ya CSL-JSON kimi ixrac edib{' '}
+          <Link href="/for-authors/references" style={{ color: 'var(--teal-d)' }}>istinad formatlayıcısı</Link> ilə seçilmiş stildə hazır siyahıya çevirə bilərsiniz.
+        </p>
 
         {/* 9 */}
         <h2 className="sec-title" style={h2}>9. Cədvəl və şəkillər</h2>

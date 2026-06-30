@@ -158,6 +158,7 @@ create table submissions (
   doi                 text,
   round               int default 1,
   article_id          uuid references articles(id) on delete set null,
+  flag_for_editor     boolean default false,
   status              text not null default 'submitted',
   note                text,
   created_at          timestamptz default now(),

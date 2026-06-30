@@ -43,7 +43,6 @@ export default async function Home() {
                 <Link className="btn btn--primary" href="/articles">Məqalələrə bax
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                 </Link>
-                <a className="btn btn--gold" href={OJS} target="_blank" rel="noopener noreferrer">Məqalə göndər</a>
                 <Link className="btn btn--ghost" href="/issues">Bütün nömrələr</Link>
               </div>
               <div className="hero__idx">

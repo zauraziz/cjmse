@@ -1,7 +1,7 @@
 -- ============================================================
 -- CJMSE — TAM QURAŞDIRMA (təkrar işə salmaq təhlükəsizdir)
 -- ============================================================
-DROP TABLE IF EXISTS article_pdfs, article_keywords, article_authors, reviews, submission_events, submissions, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
+DROP TABLE IF EXISTS submissions, article_pdfs, article_keywords, article_authors, reviews, submission_events, reviewers, keywords, articles, authors, issues, subjects, users, faqs CASCADE;
 DROP TYPE IF EXISTS recommendation, submission_status, user_role, article_type CASCADE;
 
 -- STRUKTUR
@@ -64,7 +64,7 @@ create table articles (
   title_ru      text,
   abstract_ru   text,
   keywords_ru   text,
-  type          article_type not null default 'research',
+  type          text not null default 'research',
   subject_id    uuid references subjects(id) on delete set null,
   issue_id      uuid references issues(id)   on delete set null,
   pages         text,                       -- "15–32"

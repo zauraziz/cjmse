@@ -6,6 +6,7 @@ export default function ArticleCard({ a, t, lang = 'az' }) {
   const tr = t || {};
   const title = (lang === 'en' && a.title_en) ? a.title_en : (lang === 'ru' && a.title_ru) ? a.title_ru : a.title;
   const subject = (lang === 'en' && a.subject_en) ? a.subject_en : (lang === 'ru' && a.subject_ru) ? a.subject_ru : a.subject_az;
+  const issueLabel = a.issue_title || (a.issue_volume ? `${tr.a_vol || 'Cild'} ${a.issue_volume}, № ${a.issue_number} (${a.issue_year})` : '');
   const formats = ['HTML', 'PDF'];
   if (a.data_url) formats.push('Data');
   return (
@@ -18,7 +19,7 @@ export default function ArticleCard({ a, t, lang = 'az' }) {
       <h3 className="art__title"><Link href={`/article/${a.slug}`}>{title}</Link></h3>
       <div className="art__authors">{a.authors}</div>
       <div className="art__meta">
-        <span>{a.issue_title}</span>
+        <span>{issueLabel}</span>
         <span>{tr.a_pagesAbbr || 'səh.'} {a.pages}</span>
         <span>{fmtDate(a.published_at)}</span>
         {a.doi && <span className="doi">DOI: {a.doi}</span>}

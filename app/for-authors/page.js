@@ -27,7 +27,7 @@ export default function ForAuthorsPage() {
         </p>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '20px 0 6px' }}>
-          <a className="btn btn--gold" href={OJS} target="_blank" rel="noopener noreferrer">Əlyazma göndər</a>
+          <Link className="btn btn--gold" href="/submit">Əlyazma göndər</Link>
           <Link className="btn btn--ghost" href="/ethics">Nəşr etikası →</Link>
         </div>
 

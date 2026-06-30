@@ -52,9 +52,9 @@ export default function Header({ lang = 'az', t }) {
             <Link href="/ethics" onClick={() => setOpen(false)}>{tr.nav_ethics}</Link>
             <Link href="/about" onClick={() => setOpen(false)}>{tr.nav_about}</Link>
           </nav>
-          <a className="btn btn--primary head__cta" href={OJS} target="_blank" rel="noopener noreferrer">
+          <Link className="btn btn--primary head__cta" href="/submit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>{tr.submit}
-          </a>
+          </Link>
           <button className="navtoggle" aria-label={tr.menu} aria-expanded={open} onClick={() => setOpen(!open)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>

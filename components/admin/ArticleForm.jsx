@@ -2,13 +2,20 @@
 import { useState } from 'react';
 
 const TYPES = [
-  ['research', 'Tədqiqat məqaləsi'], ['review', 'İcmal məqaləsi'],
-  ['technical', 'Texniki məqalə'], ['short', 'Qısa məlumat'], ['editorial', 'Redaksiya məqaləsi'],
+  ['research',  'Tədqiqat məqaləsi',            'Orijinal empirik və ya nəzəri tədqiqat; tam IMRaD strukturu (Giriş–Metod–Nəticələr–Müzakirə–Nəticə).'],
+  ['review',    'İcmal məqaləsi',               'Mövcud ədəbiyyatın sistemli icmalı, müqayisəsi və sintezi.'],
+  ['technical', 'Texniki məqalə',               'Texniki həll, metod, qurğu, alqoritm və ya tətbiqin ətraflı təsviri.'],
+  ['short',     'Qısa elmi hesabat (Tövsiyə)',  'Qısa həcmli ilkin nəticələr və ya tövsiyə xarakterli elmi məlumat.'],
+  ['editorial', 'Redaksiya məqaləsi',           'Redaksiya tərəfindən mövzuya və ya nömrəyə dair şərh/giriş.'],
+  ['casestudy', 'Keys-stadi',                   'Konkret hadisə, layihə və ya istismar təcrübəsinin dərin təhlili (case study).'],
 ];
+const LANGS = [['az', 'Azərbaycan dili'], ['en', 'İngilis dili (English)'], ['ru', 'Rus dili (Русский)'], ['tr', 'Türk dili (Türkçe)']];
+
 const head = { borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 6 };
 const headTxt = { fontSize: 12.5, fontWeight: 700, color: 'var(--teal-d)', fontFamily: 'var(--f-mono)', textTransform: 'uppercase', letterSpacing: '.4px' };
 
-export default function ArticleForm({ action, subjects, issues, allAuthors = [], article }) {
+export default function ArticleForm({ action, subjects, issues, allAuthors = [], affiliations = [], article }) {
+  const [type, setType] = useState(article?.type ?? 'research');
   const [rows, setRows] = useState(
     (article?.authorLinks || []).map((l) => ({
       name: l.full_name || '', orcid: l.orcid || '', affiliation: l.affiliation || '', isCorresponding: l.is_corresponding,
@@ -19,10 +26,21 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
   const remove = (i) => setRows((r) => r.filter((_, j) => j !== i));
   const move = (i, d) => setRows((r) => { const a = [...r]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });
 
+  const typeDesc = (TYPES.find(([v]) => v === type) || [])[2];
+
   return (
     <form action={action} className="adm-form">
       {article && <input type="hidden" name="id" value={article.id} />}
       <input type="hidden" name="authors" value={JSON.stringify(rows)} />
+
+      {/* ---- type chooser (with descriptions) ---- */}
+      <div className="adm-field full" style={head}><span style={headTxt}>Məqalə növü</span></div>
+      <div className="adm-field full">
+        <select name="type" value={type} onChange={(e) => setType(e.target.value)}>
+          {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <span style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 6, lineHeight: 1.6 }}>{typeDesc}</span>
+      </div>
 
       {/* ---- əsas dil ---- */}
       <div className="adm-field full" style={head}><span style={headTxt}>Məqalənin əsas dili</span></div>
@@ -44,11 +62,10 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
 
       {/* ---- metadata ---- */}
       <div className="adm-field full" style={head}><span style={headTxt}>Metadata</span></div>
-      <div className="adm-field"><label>Növ</label>
-        <select name="type" defaultValue={article?.type ?? 'research'}>{TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-      </div>
       <div className="adm-field"><label>УДК (UDC) kodu</label><input name="udc" defaultValue={article?.udc ?? ''} placeholder="629.5" /></div>
-      <div className="adm-field"><label>Əsas dil kodu</label><input name="language" defaultValue={article?.language ?? 'az'} placeholder="az / en / ru" /></div>
+      <div className="adm-field"><label>Əsas dil</label>
+        <select name="language" defaultValue={article?.language ?? 'az'}>{LANGS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+      </div>
       <div className="adm-field"><label>Sahə</label>
         <select name="subject_id" defaultValue={article?.subject_id ?? ''}>
           <option value="">— seçin —</option>
@@ -74,7 +91,7 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
         <label>PDF fayl yüklə</label>
         <input type="file" name="pdf" accept="application/pdf,.pdf" />
         <span style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4 }}>
-          ~4 MB-a qədər. Fayl bazada saxlanılır (Vercel Blob aktivdirsə, Blob-da). Daha böyük və ya xarici fayl üçün aşağıdakı URL sahəsindən istifadə edin.
+          ~4 MB-a qədər. Fayl bazada (və ya Vercel Blob aktivdirsə, Blob-da) saxlanılır. Daha böyük fayl üçün aşağıdakı URL sahəsindən istifadə edin.
         </span>
       </div>
       <div className="adm-field full">
@@ -83,12 +100,11 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
         {article?.pdf_url && <a href={article.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--teal-d)', marginTop: 4 }}>Mövcud PDF-ə bax ↗</a>}
       </div>
 
-      {/* ---- authors (inline create) ---- */}
+      {/* ---- authors (inline create + affiliation list) ---- */}
       <div className="adm-field full" style={head}><span style={headTxt}>Müəlliflər (sıra ilə · ✉ = əlaqələndirici)</span></div>
       <div className="adm-field full">
-        <datalist id="authors-dl">
-          {allAuthors.map((a) => <option key={a.id} value={a.full_name} />)}
-        </datalist>
+        <datalist id="authors-dl">{allAuthors.map((a) => <option key={a.id} value={a.full_name} />)}</datalist>
+        <datalist id="affil-dl">{affiliations.map((af, k) => <option key={k} value={af} />)}</datalist>
         {rows.length === 0 && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0' }}>Hələ müəllif yoxdur. Aşağıdakı düymə ilə əlavə edin — mövcud müəllifi siyahıdan seçə və ya yeni ad yaza bilərsiniz.</p>}
         {rows.map((row, i) => (
           <div key={i} style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 10, marginBottom: 8, background: 'var(--paper)' }}>
@@ -100,13 +116,13 @@ export default function ArticleForm({ action, subjects, issues, allAuthors = [],
               <button type="button" className="adm-mini" onClick={() => remove(i)} title="Sil">×</button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-              <input placeholder="ORCID (yeni müəllif üçün, ixtiyari)" value={row.orcid} onChange={(e) => update(i, { orcid: e.target.value })} style={{ flex: 1, minWidth: 150 }} />
-              <input placeholder="Təşkilat (yeni müəllif üçün, ixtiyari)" value={row.affiliation} onChange={(e) => update(i, { affiliation: e.target.value })} style={{ flex: 2, minWidth: 180 }} />
+              <input placeholder="ORCID (ixtiyari)" value={row.orcid} onChange={(e) => update(i, { orcid: e.target.value })} style={{ flex: 1, minWidth: 150 }} />
+              <input list="affil-dl" placeholder="Mənsubiyyət (siyahıdan seçin və ya yazın)" value={row.affiliation} onChange={(e) => update(i, { affiliation: e.target.value })} style={{ flex: 2, minWidth: 200 }} />
             </div>
           </div>
         ))}
         <div style={{ marginTop: 6 }}><button type="button" className="adm-btn adm-btn--ghost" onClick={addRow}>+ Müəllif əlavə et</button></div>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>İpucu: mövcud müəllifin adını yazmağa başlayın və siyahıdan seçin. Yeni müəllifin tam adını yazsanız (lazım olduqda ORCID/təşkilat ilə), yadda saxlananda avtomatik yaradılır.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>İpucu: mövcud müəllif/mənsubiyyət üçün yazmağa başlayın və siyahıdan seçin. Yeni müəllif avtomatik yaradılır.</p>
       </div>
 
       <div className="adm-actions">

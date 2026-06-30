@@ -83,8 +83,28 @@ export default async function ArticlePage({ params }) {
     .sort((x, y) => (x.code === lang ? -1 : y.code === lang ? 1 : 0))
     .filter((b) => b.text);
 
+  const isoPub = a.published_at ? new Date(a.published_at).toISOString().slice(0, 10) : undefined;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ScholarlyArticle',
+    headline: a.title,
+    name: a.title,
+    inLanguage: a.language || 'az',
+    url: `${SITE}/article/${a.slug}`,
+    ...(isoPub ? { datePublished: isoPub } : {}),
+    author: authors.map((au) => ({ '@type': 'Person', name: au.full_name, ...(au.orcid ? { identifier: `https://orcid.org/${au.orcid}` } : {}) })),
+    publisher: { '@type': 'Organization', name: 'Azerbaijan State Marine Academy (ADDA)' },
+    isPartOf: { '@type': 'PublicationIssue', ...(a.number ? { issueNumber: String(a.number) } : {}), isPartOf: { '@type': 'PublicationVolume', ...(a.volume ? { volumeNumber: String(a.volume) } : {}), name: 'Caspian Journal of Maritime Science & Engineering' } },
+    ...(a.abstract ? { abstract: a.abstract } : {}),
+    ...(a.keywords ? { keywords: a.keywords } : {}),
+    ...(a.doi ? { sameAs: `https://doi.org/${a.doi}`, identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: a.doi } } : {}),
+    isAccessibleForFree: true,
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+  };
+
   return (
     <section className="band">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="wrap" style={{ maxWidth: 860 }}>
         <div style={{ marginBottom: 18 }}>
           <Link href="/articles" style={{ fontFamily: 'var(--f-mono)', fontSize: 12.5, color: 'var(--teal-d)' }}>{t.a_backToArticles}</Link>
@@ -123,7 +143,7 @@ export default async function ArticlePage({ params }) {
 
         <div className="art__meta" style={{ marginTop: 14 }}>
           {a.udc && <span>{t.a_udc}: {a.udc}</span>}
-          <span>{a.issue_title}</span>
+          <span>{a.issue_title || (a.issue_volume ? `${t.a_vol} ${a.issue_volume}, № ${a.issue_number} (${a.issue_year})` : (a.volume ? `${t.a_vol} ${a.volume}, № ${a.number} (${a.year})` : ""))}</span>
           <span>{t.a_pagesAbbr} {a.pages}</span>
           <span>{fmtDate(a.published_at)}</span>
           {a.doi && <a className="doi" href={`https://doi.org/${a.doi}`} target="_blank" rel="noopener noreferrer">DOI: {a.doi}</a>}

@@ -1,4 +1,4 @@
-import { getArticleEdit, getSubjectsWithCounts, getIssuesWithCounts, getAuthorsAdmin } from '@/lib/queries';
+import { getArticleEdit, getSubjectsWithCounts, getIssuesWithCounts, getAuthorsAdmin, getAffiliations } from '@/lib/queries';
 import { createArticle, updateArticle } from '../../../actions';
 import ArticleForm from '@/components/admin/ArticleForm';
 import { notFound } from 'next/navigation';
@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 export default async function ArticleEditOrNew({ params, searchParams }) {
   const isNew = params.id === 'new';
   const saved = searchParams?.saved;
-  const [subjects, issues, authors] = await Promise.all([
-    getSubjectsWithCounts(), getIssuesWithCounts(), getAuthorsAdmin(),
+  const [subjects, issues, authors, affiliations] = await Promise.all([
+    getSubjectsWithCounts(), getIssuesWithCounts(), getAuthorsAdmin(), getAffiliations(),
   ]);
   const article = isNew ? null : await getArticleEdit(params.id);
   if (!isNew && !article) notFound();
@@ -29,7 +29,7 @@ export default async function ArticleEditOrNew({ params, searchParams }) {
         <ArticleForm
           key={isNew ? (saved || 'new') : article.id}
           action={isNew ? createArticle : updateArticle}
-          subjects={subjects} issues={issues} allAuthors={authors} article={article}
+          subjects={subjects} issues={issues} allAuthors={authors} affiliations={affiliations} article={article}
         />
       </div>
     </div>

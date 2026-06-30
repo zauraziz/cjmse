@@ -57,7 +57,7 @@ create table articles (
   title_ru      text,
   abstract_ru   text,
   keywords_ru   text,
-  type          article_type not null default 'research',
+  type          text not null default 'research',
   subject_id    uuid references subjects(id) on delete set null,
   issue_id      uuid references issues(id)   on delete set null,
   pages         text,                       -- "15–32"

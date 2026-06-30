@@ -15,6 +15,7 @@ export default function PanelLayout({ children }) {
           <Link href="/admin/issues">Nömrələr</Link>
           <Link href="/admin/authors">Müəlliflər</Link>
           <Link href="/admin/articles">Məqalələr</Link>
+          <Link href="/admin/submissions">Göndərmələr</Link>
           <Link href="/">↗ Sayta bax</Link>
         </nav>
         <form action={logout}><button className="adm-logout" type="submit">Çıxış</button></form>

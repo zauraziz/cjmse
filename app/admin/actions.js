@@ -3,11 +3,14 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { randomBytes } from 'crypto';
 import { put } from '@vercel/blob';
 import { sql } from '@/lib/db';
 import { ADMIN_COOKIE, sessionToken, verifyPassword, isAuthed } from '@/lib/auth';
+import { sendEmail, submissionEmailHtml, statusEmailHtml } from '@/lib/email';
+import { statusLabel } from '@/lib/status';
 
-const TYPES = ['research', 'review', 'technical', 'short', 'editorial'];
+const TYPES = ['research', 'review', 'technical', 'short', 'editorial', 'casestudy'];
 
 /* ---------------- input sanitizers ---------------- */
 function str(v) {
@@ -124,7 +127,7 @@ export async function createIssue(formData) {
   const volume = int(formData.get('volume'));
   const number = int(formData.get('number'));
   const year = int(formData.get('year'));
-  const title = str(formData.get('title')) || `Cild ${volume}, № ${number} (${year})`;
+  const title = str(formData.get('title')) || null;
   const isCurrent = formData.get('is_current') === 'on';
   if (isCurrent) await sql.query(`update issues set is_current = false`);
   await sql.query(
@@ -141,7 +144,7 @@ export async function updateIssue(formData) {
   const volume = int(formData.get('volume'));
   const number = int(formData.get('number'));
   const year = int(formData.get('year'));
-  const title = str(formData.get('title')) || `Cild ${volume}, № ${number} (${year})`;
+  const title = str(formData.get('title')) || null;
   const isCurrent = formData.get('is_current') === 'on';
   if (isCurrent) await sql.query(`update issues set is_current = false where id <> $1`, [id]);
   await sql.query(
@@ -258,4 +261,62 @@ export async function deleteArticle(formData) {
   if (id) await sql.query(`delete from articles where id = $1`, [id]);
   revalidateAll();
   redirect('/admin/articles');
+}
+
+/* ---------------- submissions (public submit + tracking) ---------------- */
+export async function createSubmission(formData) {
+  // honeypot: bots fill hidden "website" field
+  if (str(formData.get('website'))) redirect('/submit?error=spam');
+  const title = str(formData.get('title'));
+  const author_name = str(formData.get('author_name'));
+  const email = str(formData.get('email'));
+  if (!title || !author_name || !email) redirect('/submit?error=1');
+
+  const token = randomBytes(18).toString('hex');
+  await sql.query(
+    `insert into submissions
+       (token,title,author_name,email,coauthors,type,language,subject_id,abstract,keywords,manuscript_url,status)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'submitted')`,
+    [token, title, author_name, email, str(formData.get('coauthors')),
+     enumVal(formData.get('type'), TYPES, 'research'), str(formData.get('language')) || 'az',
+     uuid(formData.get('subject_id')), str(formData.get('abstract')), str(formData.get('keywords')),
+     str(formData.get('manuscript_url'))]);
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+  await sendEmail({
+    to: email,
+    subject: 'CJMSE — Məqalə təqdimatınız qəbul edildi',
+    html: submissionEmailHtml(title, `${site}/track/${token}`),
+  });
+  revalidatePath('/admin/submissions');
+  redirect(`/track/${token}?new=1`);
+}
+
+export async function updateSubmissionStatus(formData) {
+  guard();
+  const id = uuid(formData.get('id'));
+  if (!id) redirect('/admin/submissions');
+  const status = str(formData.get('status')) || 'submitted';
+  const note = str(formData.get('note'));
+  const r = await sql.query(
+    `update submissions set status=$1, note=$2, updated_at=now() where id=$3 returning token, email, title`,
+    [status, note, id]);
+  if (r[0]) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+    await sendEmail({
+      to: r[0].email,
+      subject: 'CJMSE — Məqalənizin statusu yeniləndi',
+      html: statusEmailHtml(r[0].title, statusLabel(status, 'az'), note, `${site}/track/${r[0].token}`),
+    });
+    revalidatePath(`/track/${r[0].token}`);
+  }
+  revalidatePath('/admin/submissions');
+  redirect('/admin/submissions');
+}
+
+export async function deleteSubmission(formData) {
+  guard();
+  const id = uuid(formData.get('id'));
+  if (id) await sql.query(`delete from submissions where id = $1`, [id]);
+  revalidatePath('/admin/submissions');
 }

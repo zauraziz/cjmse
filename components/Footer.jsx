@@ -42,6 +42,12 @@ export default function Footer({ t }) {
             </div>
           </div>
         </div>
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 4, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.4px' }}>{tr.foot_info}:</span>
+          <Link href="/information/readers">{tr.foot_readers}</Link>
+          <Link href="/information/authors">{tr.foot_authorsInfo}</Link>
+          <Link href="/information/librarians">{tr.foot_librarians}</Link>
+        </div>
         <div className="foot__bottom">
           <span className="meta">© 2026 ADDA · Elmi Əsərləri (CJMSE) · ISSN XXXX-XXXX</span>
           <span className="disclaimer">{tr.foot_disclaimer}</span>

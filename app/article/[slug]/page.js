@@ -6,6 +6,7 @@ import { getArticleBySlug } from '@/lib/queries';
 import { fmtDate } from '@/lib/format';
 import { getLang, getT } from '@/lib/serverLang';
 import { typeLabel } from '@/lib/i18n';
+import CitationBlock from '@/components/CitationBlock';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
 
@@ -191,11 +192,12 @@ export default async function ArticlePage({ params }) {
           </div>
         )}
 
-        <div className="panel" style={{ marginTop: 24 }}>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>
-            <b style={{ color: 'var(--ink)' }}>{t.a_citeAs}:</b> {authors.map((au) => au.full_name).join(', ')} ({a.year}). {a.title}. <i>Caspian Journal of Maritime Science &amp; Engineering</i>, {a.volume}({a.number}), {a.pages}.{a.doi ? ' https://doi.org/' + a.doi : ''}
-          </div>
-        </div>
+        <CitationBlock
+          label={t.a_citeAs}
+          copyText={`${authors.map((au) => au.full_name).join(', ')} (${a.year}). ${a.title}. Caspian Journal of Maritime Science & Engineering, ${a.volume}(${a.number}), ${a.pages}.${a.doi ? ' https://doi.org/' + a.doi : ''}`}
+        >
+          {authors.map((au) => au.full_name).join(', ')} ({a.year}). {a.title}. <i>Caspian Journal of Maritime Science &amp; Engineering</i>, {a.volume}({a.number}), {a.pages}.{a.doi ? ' https://doi.org/' + a.doi : ''}
+        </CitationBlock>
       </div>
     </section>
   );

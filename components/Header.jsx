@@ -48,11 +48,11 @@ export default function Header({ lang = 'az', t }) {
             </label>
           </form>
           <nav className="head__nav" aria-label="Əsas naviqasiya">
+            <Link href="/about" onClick={() => setOpen(false)}>{tr.nav_about}</Link>
             <Link href="/articles" onClick={() => setOpen(false)}>{tr.nav_articles}</Link>
             <Link href="/issues" onClick={() => setOpen(false)}>{tr.nav_issues}</Link>
             <Link href="/for-authors" onClick={() => setOpen(false)}>{tr.nav_forAuthors}</Link>
             <Link href="/ethics" onClick={() => setOpen(false)}>{tr.nav_ethics}</Link>
-            <Link href="/about" onClick={() => setOpen(false)}>{tr.nav_about}</Link>
           </nav>
           <Link className="btn btn--primary head__cta" href="/submit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>{tr.submit}

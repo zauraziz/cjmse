@@ -7,7 +7,7 @@ import { randomBytes } from 'crypto';
 import { put } from '@vercel/blob';
 import { sql } from '@/lib/db';
 import { ADMIN_COOKIE, sessionToken, verifyPassword, isAuthed } from '@/lib/auth';
-import { sendEmail, submissionEmailHtml, statusEmailHtml, reviewInviteHtml, editorNotifyHtml } from '@/lib/email';
+import { sendEmail, submissionEmailHtml, statusEmailHtml, reviewInviteHtml, editorNotifyHtml, newArticleHtml } from '@/lib/email';
 import { statusLabel } from '@/lib/status';
 
 const TYPES = ['research', 'review', 'technical', 'short', 'editorial', 'casestudy'];
@@ -245,6 +245,10 @@ export async function createArticle(formData) {
      str(formData.get('title_ru')), str(formData.get('abstract_ru')), str(formData.get('keywords_ru')), str(formData.get('udc'))]);
   await setAuthors(ins[0].id, formData, false);
   await storePdf(formData, ins[0].id, slug);
+  if (dateVal(formData.get('published_at'))) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+    await notifySubscribers(title, '', `${site}/article/${slug}`);
+  }
   revalidateAll();
   redirect('/admin/articles/new?saved=' + Date.now());
 }
@@ -301,10 +305,11 @@ export async function createSubmission(formData) {
   const token = randomBytes(18).toString('hex');
   const ins = await sql.query(
     `insert into submissions
-       (token,title,author_name,email,coauthors,type,language,subject_id,abstract,keywords,manuscript_url,status)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'submitted')
+       (token,title,author_name,author_orcid,author_affiliation,email,coauthors,type,language,subject_id,abstract,keywords,manuscript_url,status)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'submitted')
      returning id`,
-    [token, title, author_name, email, str(formData.get('coauthors')),
+    [token, title, author_name, str(formData.get('author_orcid')) || null, str(formData.get('author_affiliation')) || null,
+     email, str(formData.get('coauthors')),
      enumVal(formData.get('type'), TYPES, 'research'), str(formData.get('language')) || 'az',
      uuid(formData.get('subject_id')), str(formData.get('abstract')), str(formData.get('keywords')),
      manuscriptUrl]);
@@ -369,6 +374,21 @@ async function findOrCreateAuthor(name, orcid, affiliation, email) {
     `insert into authors (full_name, orcid, affiliation, email) values ($1,$2,$3,$4) returning id`,
     [name, orcid, affiliation, email]);
   return ins[0].id;
+}
+
+// Abunəçilərə yeni məqalə bildirişi (nəşr zamanı avtomatik; heç vaxt nəşri bloklamır)
+async function notifySubscribers(title, authors, link) {
+  try {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+    const subs = await sql.query(`select email, token from subscribers where active = true`);
+    for (const s0 of subs) {
+      await sendEmail({
+        to: s0.email,
+        subject: `CJMSE — Yeni məqalə: ${title}`,
+        html: newArticleHtml(title, authors, link, `${site}/api/unsubscribe?t=${s0.token}`),
+      });
+    }
+  } catch (e) { /* bildiriş uğursuz olsa belə nəşr davam edir */ }
 }
 
 export async function createReviewer(formData) {
@@ -463,7 +483,7 @@ export async function publishSubmission(formData) {
 
   let pos = 1;
   if (sub.author_name) {
-    const aid = await findOrCreateAuthor(sub.author_name, null, null, sub.email);
+    const aid = await findOrCreateAuthor(sub.author_name, sub.author_orcid || null, sub.author_affiliation || null, sub.email);
     await sql.query(`insert into article_authors (article_id, author_id, author_position, is_corresponding) values ($1,$2,$3,true) on conflict (article_id, author_id) do nothing`, [articleId, aid, pos++]);
   }
   for (const line of (sub.coauthors || '').split('\n')) {
@@ -479,6 +499,7 @@ export async function publishSubmission(formData) {
 
   await sql.query(`update submissions set article_id=$1, doi=$2, status='published', updated_at=now() where id=$3`, [articleId, doi, id]);
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cjmse.adda.edu.az';
+  await notifySubscribers(sub.title, sub.author_name || '', `${site}/article/${slug}`);
   await sendEmail({
     to: sub.email,
     subject: 'CJMSE — Məqaləniz nəşr olundu',

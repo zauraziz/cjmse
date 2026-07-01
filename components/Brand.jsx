@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Brand({ footer = false }) {
   return (
-    <Link className="brand" href="/" aria-label="CJMSE — Caspian Journal of Maritime Science & Engineering">
+    <Link className="brand" href="/" aria-label="Caspian Journal of Maritime Science & Engineering — ana səhifə">
       <img
         src="/adda-logo.png"
         width={46}
@@ -11,10 +11,8 @@ export default function Brand({ footer = false }) {
         style={{ display: 'block', flexShrink: 0, ...(footer ? { background: '#fff', borderRadius: '50%', padding: 2 } : {}) }}
       />
       <span className="brand__txt">
-        <span className="brand__name" style={{ letterSpacing: '.6px' }}>CJMSE</span>
-        <span className="brand__sub" style={{ whiteSpace: 'normal', lineHeight: 1.25, maxWidth: '24ch' }}>
-          {footer ? 'Azərbaycan Dövlət Dəniz Akademiyası' : 'Caspian Journal of Maritime Science & Engineering'}
-        </span>
+        <span className="brand__name">Caspian Journal of</span>
+        <span className="brand__sub">Maritime Science &amp; Engineering</span>
       </span>
     </Link>
   );

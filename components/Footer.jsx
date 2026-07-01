@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Brand from './Brand';
+import Subscribe from './Subscribe';
 
 export default function Footer({ t }) {
   const pathname = usePathname();
@@ -14,21 +15,23 @@ export default function Footer({ t }) {
           <div>
             <Brand footer />
             <p>{tr.foot_about}</p>
+            <h6 style={{ marginTop: 22 }}>{tr.foot_subHeading}</h6>
+            <Subscribe t={tr} compact />
           </div>
           <div>
             <h6>{tr.foot_nav}</h6>
             <ul>
-              <li><Link href="/issues">{tr.foot_current}</Link></li>
               <li><Link href="/articles">{tr.foot_allArticles}</Link></li>
+              <li><Link href="/issues">{tr.nav_issues}</Link></li>
               <li><Link href="/#subjects">{tr.foot_subjects}</Link></li>
-              <li><Link href="/issues">{tr.foot_archive}</Link></li>
-              <li><Link href="/#faq">{tr.foot_faq}</Link></li>
+              <li><Link href="/faq">{tr.nav_faq}</Link></li>
+              <li><Link href="/contact">{tr.nav_contact}</Link></li>
             </ul>
           </div>
           <div>
             <h6>{tr.foot_forAuthors}</h6>
             <ul>
-              <li><Link href="/for-authors">{tr.foot_submit}</Link></li>
+              <li><Link href="/submit">{tr.foot_submit}</Link></li>
               <li><Link href="/for-authors">{tr.foot_guide}</Link></li>
               <li><Link href="/ethics">{tr.foot_reviewEthics}</Link></li>
               <li><Link href="/about">{tr.foot_openAccess}</Link></li>
@@ -42,15 +45,13 @@ export default function Footer({ t }) {
             </div>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 4, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.4px' }}>{tr.foot_info}:</span>
-          <Link href="/information/readers">{tr.foot_readers}</Link>
-          <Link href="/information/authors">{tr.foot_authorsInfo}</Link>
-          <Link href="/information/librarians">{tr.foot_librarians}</Link>
-        </div>
-        <div className="foot__bottom">
-          <span className="meta">© 2026 ADDA · Elmi Əsərləri (CJMSE) · ISSN XXXX-XXXX</span>
-          <span className="disclaimer">{tr.foot_disclaimer}</span>
+
+        <div className="foot__credit">
+          <div className="c-left">
+            <span className="c-copy">© 2026 Caspian Journal of Maritime Science &amp; Engineering · ADDA. {tr.foot_rights}</span>
+            <span className="c-issn">E-ISSN 2220-1025 · P-ISSN 2220-1025 · DOI 10.30546/cjmse</span>
+          </div>
+          <span className="c-dev">{tr.foot_developedBy} <b>Zaur Əziz</b></span>
         </div>
       </div>
     </footer>

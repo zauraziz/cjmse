@@ -6,6 +6,7 @@ import ArticleCard from '@/components/ArticleCard';
 import SubjectTile from '@/components/SubjectTile';
 import TopPanel from '@/components/TopPanel';
 import FaqAccordion from '@/components/FaqAccordion';
+import Subscribe from '@/components/Subscribe';
 import {
   getMetrics, getSubjectsWithCounts, getCurrentIssue, getArticlesInIssue,
   getLatestArticles, getMostRead, getMostCited, getFaqs,
@@ -112,6 +113,13 @@ export default async function Home() {
       </section>
 
       {/* ---------- FAQ ---------- */}
+      {/* ---------- SUBSCRIBE ---------- */}
+      <section className="subscribe-band" id="subscribe">
+        <div className="wrap">
+          <Subscribe t={t} />
+        </div>
+      </section>
+
       <section className="band" id="faq">
         <div className="wrap" style={{ maxWidth: 820 }}>
           <h2 className="sec-title">Tez-tez verilən suallar</h2>
